@@ -119,3 +119,27 @@ func (q *Queries) GetProjectDetails(projectId string) (*Project, error) {
 
 	return &project, nil
 }
+
+type JoinedProjectDTO struct {
+	Project
+	Leader UserDTO `json:"leader"`
+}
+
+func (q *Queries) GetJoinedProjectDetails(projectId string) (*JoinedProjectDTO, error) {
+	sql := `SELECT p.id, p.name, p.key, p.description, p.leader_id, p.created_at, u.id, u.username, u.created_at from projects AS p
+	INNER JOIN users AS u ON p.leader_id=u.id
+	WHERE p.id=$1
+	`
+	row := q.Db.QueryRow(sql, projectId)
+
+	var p JoinedProjectDTO
+	u := &p.Leader
+
+	err := row.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Leader_id, &p.Created_at, &u.Id, &u.Username, &u.Created_at)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}

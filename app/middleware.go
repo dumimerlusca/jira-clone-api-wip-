@@ -8,21 +8,30 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/mux"
 )
+
+type contextKey string
+
+func ContextKey(key string) contextKey {
+	return contextKey(key)
+}
 
 func (app *application) authMW(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authH := r.Header.Get("authorization")
-		tokenString := strings.Split(authH, " ")[1]
+		authH := strings.Split(r.Header.Get("Authorization"), " ")
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if len(authH) != 2 {
+			app.unauthorizedRequest(w, fmt.Errorf("bad token"))
+			return
+		}
+
+		token, err := jwt.Parse(authH[1], func(token *jwt.Token) (interface{}, error) {
 
 			secret := []byte(os.Getenv("JWT_SECRET"))
 
 			return secret, nil
 		})
-
-		fmt.Println(token.Valid, token.Claims)
 
 		if err != nil {
 			app.unauthorizedRequest(w, err)
@@ -38,40 +47,38 @@ func (app *application) authMW(next http.HandlerFunc) http.HandlerFunc {
 
 		userId := claims["userId"].(string)
 
-		fmt.Println("User id=", userId)
+		ctx := context.WithValue(r.Context(), ContextKey("userId"), userId)
 
-		ctx := context.Background()
-
-		context.WithValue(ctx, "userId", userId)
-
-		r.Context()
-
-		next(w, r)
+		next(w, r.WithContext(ctx))
 	}
 }
 
-func test() {
-	// sample token string taken from the New example
-	tokenString := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmb28iOiJiYXIiLCJuYmYiOjE0NDQ0Nzg0MDB9.u1riaD1rW97opCoAuRCTy4w58Br-Zk-bh7vLiRIsrpU"
+func (app *application) projectOwnershipMW(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId := r.Context().Value(ContextKey("userId"))
+		projectId := mux.Vars(r)["projectId"]
 
-	// Parse takes the token string and a function for looking up the key. The latter is especially
-	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
-	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
-	// to the callback, providing flexibility.
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		if _, ok := userId.(string); !ok {
+			app.unauthorizedRequest(w, nil)
+			return
 		}
 
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		return []byte("HSDBASD"), nil
-	})
+		var leader_id string
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims["foo"], claims["nbf"])
-	} else {
-		fmt.Println(err)
+		row := app.db.QueryRow(`SELECT leader_id from projects WHERE id=$1 LIMIT 1`, projectId)
+
+		err := row.Scan(&leader_id)
+
+		if err != nil {
+			app.serverError(w, err)
+			return
+		}
+
+		if userId != leader_id {
+			app.unauthorizedRequest(w, fmt.Errorf("current logged in user is not project leader"))
+			return
+		}
+
+		handler(w, r)
 	}
-
 }

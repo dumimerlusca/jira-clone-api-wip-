@@ -1,5 +1,11 @@
 package db
 
+type UserDTO struct {
+	Id         string `json:"id"`
+	Username   string `json:"username"`
+	Created_at string `json:"created_at"`
+}
+
 type User struct {
 	Id         string `json:"id"`
 	Username   string `json:"username"`

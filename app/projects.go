@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// require auth
 func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
@@ -35,7 +34,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	projectDTO.Leader_id = "1" // TODO Get user id from logged in user
+	projectDTO.Leader_id = r.Context().Value(ContextKey("userId")).(string)
 
 	project, err := app.queries.CreateProject(projectDTO)
 
@@ -47,16 +46,14 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 	response.JSONWithHeaders(w, http.StatusCreated, &project)
 }
 
-// require auth
 func (app *application) getProjectsHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// require auth
 func (app *application) getProjectDetails(w http.ResponseWriter, r *http.Request) {
 	projectId := mux.Vars(r)["projectId"]
 
-	project, err := app.queries.GetProjectDetails(projectId)
+	project, err := app.queries.GetJoinedProjectDetails(projectId)
 
 	if err != nil {
 		app.serverError(w, err)
@@ -66,7 +63,6 @@ func (app *application) getProjectDetails(w http.ResponseWriter, r *http.Request
 	response.JSONWithHeaders(w, http.StatusOK, project)
 }
 
-// require auth
 func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
