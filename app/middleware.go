@@ -63,18 +63,18 @@ func (app *application) projectOwnershipMW(handler http.HandlerFunc) http.Handle
 			return
 		}
 
-		var leader_id string
+		var created_by_id string
 
-		row := app.db.QueryRow(`SELECT leader_id from projects WHERE id=$1 LIMIT 1`, projectId)
+		row := app.db.QueryRow(`SELECT created_by_id from projects WHERE id=$1 LIMIT 1`, projectId)
 
-		err := row.Scan(&leader_id)
+		err := row.Scan(&created_by_id)
 
 		if err != nil {
 			app.serverError(w, err)
 			return
 		}
 
-		if userId != leader_id {
+		if userId != created_by_id {
 			app.unauthorizedRequest(w, fmt.Errorf("current logged in user is not project leader"))
 			return
 		}

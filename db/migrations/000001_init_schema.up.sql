@@ -24,9 +24,9 @@ CREATE TABLE projects(
     name VARCHAR(255) NOT NULL,
     key VARCHAR(4) NOT NULL,
     description TEXT,
-    leader_id VARCHAR(50) NOT NULL,
+    created_by_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (leader_id) REFERENCES users(id)
+    FOREIGN KEY (created_by_id) REFERENCES users(id)
 );
 
 CREATE TYPE invitation_status AS ENUM('pending', 'accepted', 'rejected');

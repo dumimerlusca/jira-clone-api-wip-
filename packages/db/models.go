@@ -14,10 +14,10 @@ type User struct {
 }
 
 type Project struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Key         string `json:"key"`
-	Description string `json:"description"`
-	Leader_id   string `json:"leader_id"`
-	Created_at  string `json:"created_at"`
+	Id            string `json:"id"`
+	Name          string `json:"name"`
+	Key           string `json:"key"`
+	Description   string `json:"description"`
+	Created_by_id string `json:"created_by_id"`
+	Created_at    string `json:"created_at"`
 }

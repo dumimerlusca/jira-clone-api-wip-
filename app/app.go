@@ -30,7 +30,7 @@ func Init() {
 
 	fmt.Println("Connected to database")
 
-	app := application{db: sqlDb, queries: &db.Queries{Db: sqlDb}}
+	app := application{db: sqlDb, queries: db.NewQueries(sqlDb)}
 
 	mux := app.routes()
 

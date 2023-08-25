@@ -9,10 +9,10 @@ import (
 )
 
 type CreateProjectDTO struct {
-	Name        string `json:"name"`
-	Key         string `json:"key"`
-	Description string `json:"description"`
-	Leader_id   string `json:"leader_id"`
+	Name          string `json:"name"`
+	Key           string `json:"key"`
+	Description   string `json:"description"`
+	Created_by_id string `json:"created_by_id"`
 }
 
 func (p *CreateProjectDTO) Validate() error {
@@ -30,13 +30,13 @@ func (p *CreateProjectDTO) Validate() error {
 func (q *Queries) CreateProject(data CreateProjectDTO) (*Project, error) {
 	id := uuid.NewString()
 
-	sql := `INSERT INTO projects(id, name, key, description, leader_id) VALUES($1, $2, $3, $4, $5) RETURNING id, name, key, description, leader_id, created_at`
+	sql := `INSERT INTO projects(id, name, key, description, created_by_id) VALUES($1, $2, $3, $4, $5) RETURNING id, name, key, description, created_by_id, created_at`
 
-	row := q.Db.QueryRow(sql, id, data.Name, data.Key, data.Description, data.Leader_id)
+	row := q.Db.QueryRow(sql, id, data.Name, data.Key, data.Description, data.Created_by_id)
 
 	var project Project
 
-	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Leader_id, &project.Created_at)
+	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Created_by_id, &project.Created_at)
 
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (q *Queries) UpdateProject(projectId string, data UpdateProjectDTO) (*Proje
 
 	sqlSet := "SET" + " " + strings.Join(sqlColumnValues, ",")
 	sqlWhere := `WHERE id=$` + strconv.FormatInt(int64(len(values)+1), 10)
-	sqlRet := `RETURNING id, name, key, description, leader_id`
+	sqlRet := `RETURNING id, name, key, description, created_by_id`
 
 	sql := strings.Join([]string{"UPDATE projects", sqlSet, sqlWhere, sqlRet}, " ")
 
@@ -93,7 +93,7 @@ func (q *Queries) UpdateProject(projectId string, data UpdateProjectDTO) (*Proje
 
 	var project Project
 
-	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Leader_id)
+	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Created_by_id)
 
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (q *Queries) UpdateProject(projectId string, data UpdateProjectDTO) (*Proje
 }
 
 func (q *Queries) GetProjectDetails(projectId string) (*Project, error) {
-	sql := `SELECT id, name, key, description, leader_id, created_at FROM projects
+	sql := `SELECT id, name, key, description, created_by_id, created_at FROM projects
 	WHERE id=$1 
 	LIMIT 1`
 
@@ -111,7 +111,7 @@ func (q *Queries) GetProjectDetails(projectId string) (*Project, error) {
 
 	row := q.Db.QueryRow(sql, projectId)
 
-	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Leader_id, &project.Created_at)
+	err := row.Scan(&project.Id, &project.Name, &project.Key, &project.Description, &project.Created_by_id, &project.Created_at)
 
 	if err != nil {
 		return nil, err
@@ -122,20 +122,20 @@ func (q *Queries) GetProjectDetails(projectId string) (*Project, error) {
 
 type JoinedProjectDTO struct {
 	Project
-	Leader UserDTO `json:"leader"`
+	Created_by UserDTO `json:"created_by"`
 }
 
 func (q *Queries) GetJoinedProjectDetails(projectId string) (*JoinedProjectDTO, error) {
-	sql := `SELECT p.id, p.name, p.key, p.description, p.leader_id, p.created_at, u.id, u.username, u.created_at from projects AS p
-	INNER JOIN users AS u ON p.leader_id=u.id
+	sql := `SELECT p.id, p.name, p.key, p.description, p.created_by_id, p.created_at, u.id, u.username, u.created_at from projects AS p
+	INNER JOIN users AS u ON p.created_by_id=u.id
 	WHERE p.id=$1
 	`
 	row := q.Db.QueryRow(sql, projectId)
 
 	var p JoinedProjectDTO
-	u := &p.Leader
+	u := &p.Created_by
 
-	err := row.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Leader_id, &p.Created_at, &u.Id, &u.Username, &u.Created_at)
+	err := row.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_by_id, &p.Created_at, &u.Id, &u.Username, &u.Created_at)
 
 	if err != nil {
 		return nil, err

@@ -34,7 +34,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	projectDTO.Leader_id = r.Context().Value(ContextKey("userId")).(string)
+	projectDTO.Created_by_id = r.Context().Value(ContextKey("userId")).(string)
 
 	project, err := app.queries.CreateProject(projectDTO)
 
