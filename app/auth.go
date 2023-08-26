@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"jira-clone/packages/db"
+	"jira-clone/packages/models"
 	"jira-clone/packages/response"
 	"net/http"
 	"os"
@@ -12,15 +12,22 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgerrcode"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type registerPayload struct {
+type registerRequestPayload struct {
 	Username string
 	Password string
 }
 
-func (p *registerPayload) validate() error {
+type registerResponsePayload struct {
+	Token string      `json:"token"`
+	User  models.User `json:"user"`
+}
+
+func (p *registerRequestPayload) validate() error {
 	if p.Username == "" {
 		return fmt.Errorf("username required")
 	}
@@ -37,19 +44,22 @@ func (p *registerPayload) validate() error {
 }
 
 func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		app.badRequest(w, fmt.Errorf("bad request body"))
+		return
+	}
 	body, err := io.ReadAll(r.Body)
-
 	if err != nil {
 		app.badRequest(w, err)
 		return
 	}
 
-	var payload registerPayload
+	var payload registerRequestPayload
 
 	err = json.Unmarshal(body, &payload)
 
 	if err != nil {
-		app.serverError(w, err)
+		app.badRequest(w, err)
 		return
 	}
 
@@ -78,24 +88,30 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) 
 	createdUser, err := app.queries.CreateUser(userId, payload.Username, string(hashedPassword))
 
 	if err != nil {
+		if err, ok := err.(*pq.Error); ok {
+			if err.Code == pgerrcode.UniqueViolation {
+				app.badRequest(w, fmt.Errorf("username already taken"))
+				return
+			}
+		}
+
 		app.serverError(w, err)
 		return
 	}
 
-	type resPayload struct {
-		Token string  `json:"token"`
-		User  db.User `json:"user"`
-	}
-
-	response.JSONWithHeaders(w, http.StatusCreated, resPayload{Token: signedToken, User: *createdUser})
+	response.JSONWithHeaders(w, http.StatusCreated, registerResponsePayload{Token: signedToken, User: *createdUser})
 }
 
-type loginPayload struct {
+type loginRequestPayload struct {
 	Username string
 	Password string
 }
 
-func (p *loginPayload) validate() error {
+type loginResponsePayload struct {
+	Token string `json:"token"`
+}
+
+func (p *loginRequestPayload) validate() error {
 	if p.Password == "" {
 		return fmt.Errorf("password required")
 	}
@@ -113,7 +129,7 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload loginPayload
+	var payload loginRequestPayload
 
 	err = json.Unmarshal(body, &payload)
 
@@ -150,9 +166,7 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSONWithHeaders(w, http.StatusOK, struct {
-		Token string `json:"token"`
-	}{Token: signedToken})
+	response.JSONWithHeaders(w, http.StatusOK, loginResponsePayload{Token: signedToken})
 }
 
 func generateAuthToken(userId string, username string) (string, error) {

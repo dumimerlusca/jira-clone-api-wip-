@@ -49,11 +49,13 @@ func (app *application) authMW(next http.HandlerFunc) http.HandlerFunc {
 
 		ctx := context.WithValue(r.Context(), ContextKey("userId"), userId)
 
-		next(w, r.WithContext(ctx))
+		r = r.WithContext(ctx)
+
+		next(w, r)
 	}
 }
 
-func (app *application) projectOwnershipMW(handler http.HandlerFunc) http.HandlerFunc {
+func (app *application) isProjectOwnerMW(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := r.Context().Value(ContextKey("userId"))
 		projectId := mux.Vars(r)["projectId"]

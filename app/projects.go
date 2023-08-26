@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"io"
-	"jira-clone/packages/db"
+	"jira-clone/packages/queries"
 	"jira-clone/packages/response"
 	"net/http"
 
@@ -18,7 +18,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var projectDTO db.CreateProjectDTO
+	var projectDTO queries.CreateProjectDTO
 
 	err = json.Unmarshal(body, &projectDTO)
 
@@ -71,7 +71,7 @@ func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload db.UpdateProjectDTO
+	var payload queries.UpdateProjectDTO
 
 	err = json.Unmarshal(body, &payload)
 

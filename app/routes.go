@@ -17,7 +17,7 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("/api/projects", app.authMW(app.createProjectHandler)).Methods("POST")
 	mux.HandleFunc("/api/projects", app.authMW(app.getProjectsHandler)).Methods("GET")
-	mux.HandleFunc("/api/projects/{projectId}", app.authMW(app.projectOwnershipMW(app.getProjectDetails))).Methods("GET")
-	mux.HandleFunc("/api/projects/{projectId}", app.authMW(app.projectOwnershipMW(app.updateProject))).Methods("PATCH")
+	mux.HandleFunc("/api/projects/{projectId}", app.authMW(app.isProjectOwnerMW(app.getProjectDetails))).Methods("GET")
+	mux.HandleFunc("/api/projects/{projectId}", app.authMW(app.isProjectOwnerMW(app.updateProject))).Methods("PATCH")
 	return mux
 }

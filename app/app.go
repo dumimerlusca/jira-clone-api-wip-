@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"jira-clone/packages/db"
+	"jira-clone/packages/queries"
 	"log"
 	"net/http"
 
@@ -12,7 +13,7 @@ import (
 
 type application struct {
 	db      *sql.DB
-	queries *db.Queries
+	queries *queries.Queries
 }
 
 func Init() {
@@ -30,7 +31,7 @@ func Init() {
 
 	fmt.Println("Connected to database")
 
-	app := application{db: sqlDb, queries: db.NewQueries(sqlDb)}
+	app := application{db: sqlDb, queries: queries.NewQueries(sqlDb)}
 
 	mux := app.routes()
 

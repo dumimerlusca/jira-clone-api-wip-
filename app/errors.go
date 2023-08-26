@@ -6,13 +6,17 @@ import (
 	"net/http"
 )
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func (app *application) errorMessage(w http.ResponseWriter, status int, message string, err error) {
 	fmt.Println(message)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	err = response.JSONWithHeaders(w, status, map[string]string{"error": message})
+	err = response.JSONWithHeaders(w, status, ErrorResponse{Error: message})
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -28,9 +32,6 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 
 func (app *application) badRequest(w http.ResponseWriter, err error) {
 	message := "Bad request"
-	if err != nil {
-		message = err.Error()
-	}
 	app.errorMessage(w, http.StatusBadRequest, message, err)
 }
 
