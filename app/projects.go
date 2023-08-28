@@ -11,6 +11,11 @@ import (
 )
 
 func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		app.badRequest(w, "", nil)
+		return
+	}
+
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -43,7 +48,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response.JSONWithHeaders(w, http.StatusCreated, &project)
+	response.NewSuccessResponse(w, http.StatusCreated, *project)
 }
 
 func (app *application) getProjectsHandler(w http.ResponseWriter, r *http.Request) {

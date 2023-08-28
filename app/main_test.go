@@ -4,6 +4,7 @@ import (
 	"jira-clone/packages/db"
 	"jira-clone/packages/queries"
 	"log"
+	"net/http"
 	"os"
 	"testing"
 
@@ -11,6 +12,8 @@ import (
 )
 
 var tApp *application
+var tHandler http.Handler
+var tu *TestUtils
 
 func TestMain(m *testing.M) {
 	err := godotenv.Load("../.env.test")
@@ -28,6 +31,8 @@ func TestMain(m *testing.M) {
 
 	queries := queries.NewQueries(db)
 	tApp = &application{db: db, queries: queries}
+	tHandler = tApp.routes()
+	tu = &TestUtils{app: tApp}
 
 	os.Exit(m.Run())
 }

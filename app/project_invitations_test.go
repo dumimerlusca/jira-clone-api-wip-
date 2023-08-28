@@ -107,7 +107,7 @@ func TestAcceptProjectInviteHandler(t *testing.T) {
 
 		var successRes response.SuccessResponse
 		util.ReadAndUnmarshal(res.Body, &successRes)
-		require.Equal(t, true, successRes.Sucess)
+		require.Equal(t, true, successRes.Success)
 
 		updatedIv, err := tApp.queries.FindProjectInvitationById(inv.Inv.Id)
 
@@ -135,7 +135,7 @@ func TestRejectProjectInviteHandler(t *testing.T) {
 
 		var successRes response.SuccessResponse
 		util.ReadAndUnmarshal(res.Body, &successRes)
-		require.Equal(t, true, successRes.Sucess)
+		require.Equal(t, true, successRes.Success)
 
 		updatedIv, err := tApp.queries.FindProjectInvitationById(inv.Inv.Id)
 
