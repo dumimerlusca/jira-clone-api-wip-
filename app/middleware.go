@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -22,7 +21,7 @@ func (app *application) authMW(next http.HandlerFunc) http.HandlerFunc {
 		authH := strings.Split(r.Header.Get("Authorization"), " ")
 
 		if len(authH) != 2 {
-			app.unauthorizedRequest(w, fmt.Errorf("bad token"))
+			app.unauthorizedRequest(w, "", nil)
 			return
 		}
 
@@ -34,14 +33,14 @@ func (app *application) authMW(next http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
-			app.unauthorizedRequest(w, err)
+			app.unauthorizedRequest(w, "", err)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 
 		if !ok {
-			app.unauthorizedRequest(w, err)
+			app.unauthorizedRequest(w, "", err)
 			return
 		}
 
@@ -61,7 +60,7 @@ func (app *application) isProjectOwnerMW(handler http.HandlerFunc) http.HandlerF
 		projectId := mux.Vars(r)["projectId"]
 
 		if _, ok := userId.(string); !ok {
-			app.unauthorizedRequest(w, nil)
+			app.unauthorizedRequest(w, "", nil)
 			return
 		}
 
@@ -72,12 +71,12 @@ func (app *application) isProjectOwnerMW(handler http.HandlerFunc) http.HandlerF
 		err := row.Scan(&created_by_id)
 
 		if err != nil {
-			app.serverError(w, err)
+			app.serverError(w, "", err)
 			return
 		}
 
 		if userId != created_by_id {
-			app.unauthorizedRequest(w, fmt.Errorf("current logged in user is not project leader"))
+			app.unauthorizedRequest(w, "current logged in user is not project leader", err)
 			return
 		}
 

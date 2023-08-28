@@ -32,3 +32,21 @@ func (q *Queries) CreateRandomProject(t *testing.T) (*models.Project, *models.Us
 
 	return project, user
 }
+
+type CreateRandomProjectInviteReturnValue struct {
+	Inv      *models.ProjectInvitation
+	Project  *models.Project
+	Sender   *models.User
+	Receiver *models.User
+}
+
+func (q *Queries) CreateRandomProjectInvite(t *testing.T, status string) (*CreateRandomProjectInviteReturnValue, error) {
+	project, sender := q.CreateRandomProject(t)
+	receiver, _ := q.CreateRandomUser(t)
+
+	p := CreateProjectInvitationPayload{Status: status, Receiver_id: receiver.Id, Project_id: project.Id, Sender_id: sender.Id}
+
+	inv, err := q.CreateProjectInvitation(p)
+
+	return &CreateRandomProjectInviteReturnValue{Inv: inv, Project: project, Receiver: receiver, Sender: sender}, err
+}

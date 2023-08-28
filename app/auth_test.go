@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"jira-clone/packages/random"
+	"jira-clone/packages/util"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -99,21 +100,9 @@ func TestLogin(t *testing.T) {
 
 		var rBody loginResponsePayload
 
-		ReadAndUnmarshal(res.Body, &rBody)
+		util.ReadAndUnmarshal(res.Body, &rBody)
 
 		require.NotZero(t, rBody.Token)
 
 	})
-}
-
-func ReadAndUnmarshal(body *bytes.Buffer, v any) error {
-	data, err := io.ReadAll(body)
-
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(data, v)
-
-	return err
 }

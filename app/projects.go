@@ -14,7 +14,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error reading req body", err)
 		return
 	}
 
@@ -23,14 +23,14 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 	err = json.Unmarshal(body, &projectDTO)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error decoding req body", err)
 		return
 	}
 
 	err = projectDTO.Validate()
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, err.Error(), err)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 	project, err := app.queries.CreateProject(projectDTO)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "", err)
 		return
 	}
 
@@ -56,7 +56,7 @@ func (app *application) getProjectDetails(w http.ResponseWriter, r *http.Request
 	project, err := app.queries.GetJoinedProjectDetails(projectId)
 
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error reading req body", err)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &payload)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error decoding req body", err)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 	project, err := app.queries.UpdateProject(projectId, payload)
 
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 

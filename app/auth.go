@@ -45,12 +45,12 @@ func (p *registerRequestPayload) validate() error {
 
 func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
-		app.badRequest(w, fmt.Errorf("bad request body"))
+		app.badRequest(w, "body must not be empty", nil)
 		return
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error decoding request body", err)
 		return
 	}
 
@@ -59,20 +59,20 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) 
 	err = json.Unmarshal(body, &payload)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error decoding request body", err)
 		return
 	}
 
 	err = payload.validate()
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, err.Error(), err)
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), 10)
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 
@@ -81,7 +81,7 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) 
 	signedToken, err := generateAuthToken(userId, payload.Username)
 
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 
@@ -90,12 +90,12 @@ func (app *application) registerHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		if err, ok := err.(*pq.Error); ok {
 			if err.Code == pgerrcode.UniqueViolation {
-				app.badRequest(w, fmt.Errorf("username already taken"))
+				app.badRequest(w, "username already taken", err)
 				return
 			}
 		}
 
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error reading req body", err)
 		return
 	}
 
@@ -134,35 +134,35 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &payload)
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, "error decoding req body", err)
 		return
 	}
 
 	err = payload.validate()
 
 	if err != nil {
-		app.badRequest(w, err)
+		app.badRequest(w, err.Error(), err)
 		return
 	}
 
 	user, err := app.queries.FindUserByUsername(payload.Username, true)
 
 	if err != nil {
-		app.badRequest(w, fmt.Errorf("bad credentials"))
+		app.unauthorizedRequest(w, "bad credentials", err)
 		return
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(payload.Password))
 
 	if err != nil {
-		app.badRequest(w, fmt.Errorf("bad credentials"))
+		app.unauthorizedRequest(w, "bad credentials", err)
 		return
 	}
 
 	signedToken, err := generateAuthToken(user.Id, payload.Username)
 
 	if err != nil {
-		app.serverError(w, err)
+		app.serverError(w, "", err)
 		return
 	}
 
