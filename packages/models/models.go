@@ -10,7 +10,7 @@ type User struct {
 	Id         string `json:"id"`
 	Username   string `json:"username"`
 	Created_at string `json:"created_at"`
-	Password   string `json:"password"`
+	Password   string `json:"password,omitempty"`
 }
 
 type Project struct {
@@ -34,4 +34,20 @@ type ProjectInvitation struct {
 type UserProjectXref struct {
 	User_id    string `json:"user_id"`
 	Project_id string `json:"project_id"`
+}
+
+type Ticket struct {
+	Id            string  `json:"id"`
+	Priority      int     `json:"priority"`
+	Title         string  `json:"title"`
+	Story_points  int     `json:"story_points"`
+	Description   *string `json:"description"`
+	Status        string  `json:"status"`
+	Created_by_id string  `json:"created_by_id"`
+	Assignee_id   *string `json:"assignee_id"`
+	Project_id    string  `json:"project_id"`
+	Component_id  *string `json:"component_id"`
+	Updated_by_id string  `json:"updated_by_id"`
+	Created_at    string  `json:"created_at"`
+	Updated_at    string  `json:"updated_at"`
 }

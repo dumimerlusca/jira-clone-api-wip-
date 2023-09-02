@@ -1,9 +1,7 @@
 package app
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"jira-clone/packages/consts"
 	"jira-clone/packages/mock"
 	"jira-clone/packages/response"
@@ -24,19 +22,9 @@ func TestSendProjectInvitation(t *testing.T) {
 
 		payload := sendProjectInvitationReqPayload{ReceiverId: receiver.Id}
 
-		u, _ := json.Marshal(payload)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPost, "/api/projects/sendInvite/"+project.Id, payload, sender.Id)
 
-		req, _ := http.NewRequest(http.MethodPost, "", bytes.NewBuffer(u))
-		req = mux.SetURLVars(req, map[string]string{"projectId": project.Id})
-		res := httptest.NewRecorder()
-
-		ctx := context.WithValue(req.Context(), ContextKey("userId"), sender.Id)
-
-		req = req.WithContext(ctx)
-
-		tApp.sendProjectInvitationHandler(res, req)
-
-		require.Equal(t, http.StatusCreated, res.Code)
+		tu.RequireStatus(t, res, http.StatusCreated)
 
 		var count int
 
@@ -56,21 +44,11 @@ func TestSendProjectInvitation(t *testing.T) {
 
 		payload := sendProjectInvitationReqPayload{ReceiverId: existentInvite.Receiver.Id}
 
-		u, _ := json.Marshal(payload)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPost, "/api/projects/sendInvite/"+existentInvite.Project.Id, payload, existentInvite.Sender.Id)
 
-		req, _ := http.NewRequest(http.MethodPost, "", bytes.NewBuffer(u))
-		res := httptest.NewRecorder()
-
-		ctx := context.WithValue(req.Context(), ContextKey("userId"), existentInvite.Sender.Id)
-
-		req = req.WithContext(ctx)
-
-		req = mux.SetURLVars(req, map[string]string{"projectId": existentInvite.Project.Id})
-
-		tApp.sendProjectInvitationHandler(res, req)
 		var resEror response.ErrorResponse
 
-		json.Unmarshal(res.Body.Bytes(), &resEror)
+		util.ReadAndUnmarshal(res.Body, &resEror)
 
 		require.Equal(t, http.StatusBadRequest, res.Code)
 		require.Equal(t, consts.MsgOneProjectInvitationIsAlreadyPending, resEror.Error)
@@ -101,7 +79,7 @@ func TestAcceptProjectInviteHandler(t *testing.T) {
 
 		require.NoError(t, err)
 
-		res, _ := newUpdateProjectInviteRequest(inv.Receiver.Id, inv.Inv.Id, tApp.acceptProjectInviteHandler)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPost, "/api/projects/acceptInvite/"+inv.Inv.Id, nil, inv.Inv.Receiver_id)
 
 		require.Equal(t, http.StatusOK, res.Code)
 
@@ -129,7 +107,7 @@ func TestRejectProjectInviteHandler(t *testing.T) {
 
 		require.NoError(t, err)
 
-		res, _ := newUpdateProjectInviteRequest(inv.Receiver.Id, inv.Inv.Id, tApp.rejectProjectInviteHandler)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPost, "/api/projects/rejectInvite/"+inv.Inv.Id, nil, inv.Inv.Receiver_id)
 
 		require.Equal(t, http.StatusOK, res.Code)
 

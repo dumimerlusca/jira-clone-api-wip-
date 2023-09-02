@@ -75,15 +75,15 @@ CREATE TYPE ticket_status AS ENUM (
 
 CREATE TABLE tickets (
     id VARCHAR(255) PRIMARY KEY,
-    priority ticket_priority NOT NULL,
+    priority ticket_priority NOT NULL DEFAULT '2',
     title VARCHAR(255) NOT NULL,
     story_points INT DEFAULT 0,
     description TEXT,
     status ticket_status NOT NULL DEFAULT 'open',
     created_by_id VARCHAR(50) NOT NULL,
-    assignee_id VARCHAR(50) NOT NULL,
+    assignee_id VARCHAR(50) NULL,
     project_id VARCHAR(50) NOT NULL,
-    component_id INT NOT NULL,
+    component_id INT NULL,
     updated_by_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),

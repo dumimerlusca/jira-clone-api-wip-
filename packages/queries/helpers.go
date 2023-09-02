@@ -27,6 +27,7 @@ func (q *Queries) CreateRandomProject(t *testing.T) (*models.Project, *models.Us
 
 	data := CreateProjectDTO{Name: name, Description: description, Key: key, Created_by_id: user.Id}
 	project, err := q.CreateProject(data)
+	q.CreateUserProjectXref(user.Id, project.Id)
 
 	require.NoError(t, err)
 
@@ -49,4 +50,14 @@ func (q *Queries) CreateRandomProjectInvite(t *testing.T, status string) (*Creat
 	inv, err := q.CreateProjectInvitation(p)
 
 	return &CreateRandomProjectInviteReturnValue{Inv: inv, Project: project, Receiver: receiver, Sender: sender}, err
+}
+
+func (q *Queries) CreateRandomTicket(t *testing.T) *models.Ticket {
+	project, user := q.CreateRandomProject(t)
+	data := CreateTicketDTO{Project_id: project.Id, Created_by_id: user.Id, Title: random.RandomString(20)}
+	ticket, err := q.CreateTicket(data)
+
+	require.NoError(t, err)
+
+	return ticket
 }

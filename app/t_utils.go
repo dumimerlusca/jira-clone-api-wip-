@@ -16,6 +16,16 @@ type TestUtils struct {
 	app *application
 }
 
+func (u *TestUtils) IsErrorResponse(t *testing.T, res *httptest.ResponseRecorder) {
+	var a response.ErrorResponse
+
+	err := util.ReadAndUnmarshal(res.Body, &a)
+
+	require.NoError(t, err)
+
+	require.Equal(t, false, a.Success)
+	require.NotZero(t, a.Error)
+}
 func (u *TestUtils) IsSuccessResponseWithData(t *testing.T, res *httptest.ResponseRecorder) {
 	var a response.SuccessResponse
 
@@ -31,9 +41,13 @@ func (u *TestUtils) RequireStatus(t *testing.T, res *httptest.ResponseRecorder, 
 	require.Equal(t, status, res.Code)
 }
 
-func (u *TestUtils) AuthorizeRequest(t *testing.T, req *http.Request) {
-	user, _ := u.app.queries.CreateRandomUser(t)
-	token, err := generateAuthToken(user.Id, user.Username)
+func (u *TestUtils) AuthorizeRequest(t *testing.T, req *http.Request, userId string) {
+	if userId == "" {
+		user, _ := u.app.queries.CreateRandomUser(t)
+		userId = user.Id
+	}
+
+	token, err := generateAuthToken(userId, "")
 	require.NoError(t, err)
 	req.Header.Set("Authorization", `Bearer`+" "+token)
 }
@@ -52,16 +66,16 @@ func (u *TestUtils) CreateReqAndRes(t *testing.T, method string, url string, bod
 	return res, req
 }
 
-func (u *TestUtils) CreateAuthorizedReqAndRes(t *testing.T, method string, url string, body any) (*httptest.ResponseRecorder, *http.Request) {
+func (u *TestUtils) CreateAuthorizedReqAndRes(t *testing.T, method string, url string, body any, userId string) (*httptest.ResponseRecorder, *http.Request) {
 	res, req := u.CreateReqAndRes(t, method, url, body)
 
-	u.AuthorizeRequest(t, req)
+	u.AuthorizeRequest(t, req, userId)
 
 	return res, req
 }
 
-func (u *TestUtils) SendAuthorizedReq(t *testing.T, method string, url string, body any) (*httptest.ResponseRecorder, *http.Request) {
-	res, req := u.CreateAuthorizedReqAndRes(t, method, url, body)
+func (u *TestUtils) SendAuthorizedReq(t *testing.T, method string, url string, body any, userId string) (*httptest.ResponseRecorder, *http.Request) {
+	res, req := u.CreateAuthorizedReqAndRes(t, method, url, body, userId)
 	u.app.routes().ServeHTTP(res, req)
 	return res, req
 }
@@ -70,8 +84,4 @@ func (u *TestUtils) SendUnauthorizedReq(t *testing.T, method string, url string,
 	res, req := u.CreateReqAndRes(t, method, url, body)
 	u.app.routes().ServeHTTP(res, req)
 	return res, req
-}
-
-func (u *TestUtils) RequireAuth(t *testing.T, res *httptest.ResponseRecorder) {
-
 }

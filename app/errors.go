@@ -42,3 +42,11 @@ func (app *application) unauthorizedRequest(w http.ResponseWriter, message strin
 	}
 	app.errorMessage(w, http.StatusUnauthorized, message, err)
 }
+
+func (app *application) notFound(w http.ResponseWriter, message string, err error) {
+	defMsg := "not found"
+	if message == "" {
+		message = defMsg
+	}
+	app.errorMessage(w, http.StatusNotFound, message, err)
+}

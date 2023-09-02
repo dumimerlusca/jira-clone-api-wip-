@@ -144,3 +144,46 @@ func (q *Queries) GetJoinedProjectDetails(projectId string) (*JoinedProjectDTO, 
 
 	return &p, nil
 }
+
+func (q *Queries) GetProjectMembers(projectId string) ([]*models.User, error) {
+	rows, err := q.Db.Query(`SELECT u.id, u.username, u.created_at FROM user_project_xref AS upxref
+		INNER JOIN users as u ON u.id=upxref.user_id
+	 	WHERE project_id=$1`, projectId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*models.User
+
+	for rows.Next() {
+		var user models.User
+
+		err := rows.Scan(&user.Id, &user.Username, &user.Created_at)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, &user)
+	}
+
+	return users, nil
+}
+
+func (q *Queries) IsProjectMember(userId string, projectId string) (bool, error) {
+
+	var count int
+	row := q.Db.QueryRow(`SELECT COUNT(*) from user_project_xref WHERE user_id=$1 AND project_id=$2`, userId, projectId)
+
+	err := row.Scan(&count)
+
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	}
+	return true, nil
+}

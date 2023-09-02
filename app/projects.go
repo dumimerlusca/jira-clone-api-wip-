@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"jira-clone/packages/queries"
@@ -48,6 +49,13 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	_, err = app.queries.CreateUserProjectXref(projectDTO.Created_by_id, project.Id)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
 	response.NewSuccessResponse(w, http.StatusCreated, *project)
 }
 
@@ -65,7 +73,7 @@ func (app *application) getProjectDetails(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response.JSONWithHeaders(w, http.StatusOK, project)
+	response.NewSuccessResponse(w, http.StatusOK, project)
 }
 
 func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
@@ -94,5 +102,29 @@ func (app *application) updateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSONWithHeaders(w, http.StatusOK, project)
+	response.NewSuccessResponse(w, http.StatusOK, project)
+}
+
+func (app *application) getProjectMembers(w http.ResponseWriter, r *http.Request) {
+	projectId := mux.Vars(r)["projectId"]
+
+	_, err := app.queries.GetProjectDetails(projectId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.notFound(w, "project with id "+projectId+" not found", err)
+			return
+		}
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	users, err := app.queries.GetProjectMembers(projectId)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, users)
 }

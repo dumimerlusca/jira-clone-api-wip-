@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -167,6 +168,23 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSONWithHeaders(w, http.StatusOK, loginResponsePayload{Token: signedToken})
+}
+
+func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(ContextKey("userId")).(string)
+
+	user, err := app.queries.FindUserById(userId, false)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			app.notFound(w, "user with id "+userId+" not found", err)
+			return
+		}
+		app.serverError(w, "", err)
+		return
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, user)
 }
 
 func generateAuthToken(userId string, username string) (string, error) {

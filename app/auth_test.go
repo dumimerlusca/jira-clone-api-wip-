@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"jira-clone/packages/random"
+	"jira-clone/packages/response"
 	"jira-clone/packages/util"
 	"net/http"
 	"net/http/httptest"
@@ -103,6 +104,34 @@ func TestLogin(t *testing.T) {
 		util.ReadAndUnmarshal(res.Body, &rBody)
 
 		require.NotZero(t, rBody.Token)
+
+	})
+}
+
+func TestGetCurrentUserHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, "GET", "/api/auth/me", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return status 200 and current logged in user", func(t *testing.T) {
+		user, _ := tu.app.queries.CreateRandomUser(t)
+
+		res, _ := tu.SendAuthorizedReq(t, "GET", "/api/auth/me", nil, user.Id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		var resBody response.SuccessResponse
+
+		util.ReadAndUnmarshal(res.Body, &resBody)
+
+		data, ok := resBody.Data.(map[string]any)
+
+		require.Equal(t, true, ok)
+		require.Equal(t, user.Id, data["id"])
+		require.Equal(t, user.Username, data["username"])
+		require.Equal(t, user.Created_at, data["created_at"])
 
 	})
 }

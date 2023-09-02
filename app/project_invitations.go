@@ -24,19 +24,19 @@ func (app *application) sendProjectInvitationHandler(w http.ResponseWriter, r *h
 	err := util.ReadAndUnmarshal(r.Body, &payload)
 
 	if err != nil {
-		app.serverError(w, "", err)
+		app.serverError(w, err.Error(), err)
 		return
 	}
 
 	if payload.ReceiverId == "" {
-		app.badRequest(w, "", nil)
+		app.badRequest(w, "receiver id must not be empty", nil)
 		return
 	}
 
 	count, err := app.queries.SelectPendingProjectInvitationsCount(payload.ReceiverId, projectId)
 
 	if err != nil {
-		app.serverError(w, "", err)
+		app.serverError(w, err.Error(), err)
 		return
 	}
 

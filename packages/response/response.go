@@ -24,12 +24,12 @@ func JSONWithHeaders(w http.ResponseWriter, status int, data any) error {
 }
 
 type ErrorResponse struct {
-	Sucess bool   `json:"success"`
-	Error  string `json:"error"`
+	Success bool   `json:"success"`
+	Error   string `json:"error"`
 }
 
 func NewErrorResponse(w http.ResponseWriter, status int, msg string) {
-	d := ErrorResponse{Sucess: false, Error: msg}
+	d := ErrorResponse{Success: false, Error: msg}
 
 	err := JSONWithHeaders(w, status, d)
 

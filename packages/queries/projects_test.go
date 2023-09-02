@@ -24,3 +24,21 @@ func TestCreateProject(t *testing.T) {
 	require.NotZero(t, project.Id)
 	require.NotZero(t, project.Created_at)
 }
+
+func TestIsProjectMember(t *testing.T) {
+	t.Run("should return true if user is project member", func(t *testing.T) {
+		project, _ := tQueries.CreateRandomProject(t)
+		user, _ := tQueries.CreateRandomUser(t)
+		tQueries.Db.Exec(`INSERT INTO user_project_xref(user_id, project_id) VALUES($1, $2)`, user.Id, project.Id)
+		v, err := tQueries.IsProjectMember(user.Id, project.Id)
+		require.NoError(t, err)
+		require.Equal(t, true, v)
+	})
+	t.Run("should return false if user is not project member", func(t *testing.T) {
+		project, _ := tQueries.CreateRandomProject(t)
+		user, _ := tQueries.CreateRandomUser(t)
+		v, err := tQueries.IsProjectMember(user.Id, project.Id)
+		require.NoError(t, err)
+		require.Equal(t, false, v)
+	})
+}

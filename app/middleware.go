@@ -83,3 +83,29 @@ func (app *application) isProjectOwnerMW(handler http.HandlerFunc) http.HandlerF
 		handler(w, r)
 	}
 }
+
+func (app *application) isProjectMemberMW(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId := r.Context().Value(ContextKey("userId")).(string)
+		projectId := mux.Vars(r)["projectId"]
+
+		if projectId == "" || userId == "" {
+			app.badRequest(w, "projectId or userId missing", nil)
+			return
+		}
+
+		isMember, err := app.queries.IsProjectMember(userId, projectId)
+
+		if err != nil {
+			app.serverError(w, err.Error(), err)
+			return
+		}
+
+		if !isMember {
+			app.unauthorizedRequest(w, "you can't modify this project since you are not a member of it", nil)
+			return
+		}
+
+		handler(w, r)
+	}
+}

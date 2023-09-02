@@ -1,6 +1,11 @@
 package queries
 
-import "jira-clone/packages/models"
+import (
+	"fmt"
+	"jira-clone/packages/models"
+
+	"github.com/lib/pq"
+)
 
 func (q *Queries) GetUsers() ([]models.User, error) {
 	db := q.Db
@@ -70,6 +75,35 @@ func (q *Queries) FindUserByUsername(username string, includePassword bool) (*mo
 	row := db.QueryRow(sql, username)
 
 	err := row.Scan(args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+func (q *Queries) FindUserById(id string, includePassword bool) (*models.User, error) {
+	db := q.Db
+
+	var sql string
+	var args []any
+	var user models.User
+
+	if includePassword {
+		sql = `SELECT id, username, created_at, password FROM users WHERE id = $1`
+		args = append(args, &user.Id, &user.Username, &user.Created_at, &user.Password)
+	} else {
+		sql = `SELECT id, username, created_at FROM users WHERE id = $1`
+		args = append(args, &user.Id, &user.Username, &user.Created_at)
+	}
+
+	row := db.QueryRow(sql, id)
+
+	err := row.Scan(args...)
+
+	_, test := err.(*pq.Error)
+
+	fmt.Println("HELLO1", err, test)
 
 	if err != nil {
 		return nil, err
