@@ -99,6 +99,8 @@ CREATE TABLE comments(
     ticket_id VARCHAR(50) NOT NULL,
     author_id VARCHAR(50) NOT NULL,
     text TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (author_id) REFERENCES users(id)
 )

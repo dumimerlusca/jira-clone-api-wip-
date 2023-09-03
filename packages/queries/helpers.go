@@ -61,3 +61,13 @@ func (q *Queries) CreateRandomTicket(t *testing.T) *models.Ticket {
 
 	return ticket
 }
+
+func (q *Queries) CreateRandomComment(t *testing.T) *models.Comment {
+	ticket := q.CreateRandomTicket(t)
+	d := CreateCommentDTO{Author_id: ticket.Created_by_id, Text: random.RandomString(20), Ticket_id: ticket.Id}
+	com, err := q.CreateComment(d)
+
+	require.NoError(t, err)
+
+	return com
+}

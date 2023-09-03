@@ -10,6 +10,7 @@ func (app *application) routes() http.Handler {
 	mux := mux.NewRouter()
 
 	// TICKETS
+	mux.HandleFunc("/api/projects/{projectId}/tickets", app.authMW(app.isProjectMemberMW(app.getProjectTickets))).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/create", app.authMW(app.isProjectMemberMW(app.createTicketHandler))).Methods("POST")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")
 
@@ -34,6 +35,11 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("/api/projects/rejectInvite/{inviteId}", app.authMW(app.validateUpdateProjectInviteMW(app.rejectProjectInviteHandler))).Methods("POST")
 	mux.HandleFunc("/api/project-invites/sent", app.authMW(app.getSentProjectInvites)).Methods("GET")
 	mux.HandleFunc("/api/project-invites/received", app.authMW(app.getReceivedProjectInvites)).Methods("GET")
+
+	// COMMENTS
+	mux.HandleFunc("/api/tickets/{ticketId}/comments/create", app.authMW(app.isProjectMemberMW(app.createCommentHandler))).Methods("POST")
+	mux.HandleFunc("/api/tickets/{ticketId}/comments", app.authMW(app.isProjectMemberMW(app.getTicketCommentsHandler))).Methods("GET")
+	mux.HandleFunc("/api/comments/delete/{commentId}", app.authMW(app.deleteCommentHandler)).Methods("DELETE")
 
 	return mux
 }

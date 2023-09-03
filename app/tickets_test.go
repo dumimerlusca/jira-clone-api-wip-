@@ -107,3 +107,38 @@ func TestUpdateTicketHandler(t *testing.T) {
 
 	})
 }
+
+func TestGetProjectTickets(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodGet, "/api/projects/projectId/tickets", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("require user to be project member", func(t *testing.T) {
+		project, _ := tu.app.queries.CreateRandomProject(t)
+		user, _ := tu.app.queries.CreateRandomUser(t)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodGet, "/api/projects/"+project.Id+"/tickets", nil, user.Id)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 200 and the array of tickets", func(t *testing.T) {
+
+		ticket := tu.app.queries.CreateRandomTicket(t)
+
+		res, _ := tu.SendAuthorizedReq(t, http.MethodGet, "/api/projects/"+ticket.Project_id+"/tickets", nil, ticket.Created_by_id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		var resBody response.SuccessResponse
+
+		util.ReadAndUnmarshal(res.Body, &resBody)
+
+		data, ok := resBody.Data.([]any)
+
+		assert.Equal(t, true, ok)
+		assert.Equal(t, 1, len(data))
+	})
+
+}

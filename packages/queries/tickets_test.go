@@ -69,5 +69,26 @@ func TestUpdateTicket(t *testing.T) {
 		assert.Equal(t, story_points, updatedTicket.Story_points)
 		assert.Equal(t, assigne_id, *updatedTicket.Assignee_id)
 		assert.Equal(t, status, updatedTicket.Status)
+		assert.NotEqual(t, ticket.Updated_at, updatedTicket.Updated_at)
+	})
+}
+
+func TestFindTicketById(t *testing.T) {
+	t.Run("should return the ticket if it exists", func(t *testing.T) {
+		tkt := tQueries.CreateRandomTicket(t)
+		ticket, err := tQueries.FindTicketById(tkt.Id)
+
+		require.NoError(t, err)
+
+		require.NotEmpty(t, ticket)
+		require.Equal(t, tkt.Id, ticket.Id)
+
+	})
+
+	t.Run("should return error if ticket is not found", func(t *testing.T) {
+		ticket, err := tQueries.FindTicketById(random.RandomString(30))
+
+		require.Error(t, err)
+		require.Empty(t, ticket)
 	})
 }

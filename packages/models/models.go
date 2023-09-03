@@ -51,3 +51,12 @@ type Ticket struct {
 	Created_at    string  `json:"created_at"`
 	Updated_at    string  `json:"updated_at"`
 }
+
+type Comment struct {
+	Id         string `json:"id"`
+	Author_id  string `json:"author_id"`
+	Ticket_id  string `json:"ticket_id"`
+	Text       string `json:"text"`
+	Created_at string `json:"created_at"`
+	Updated_at string `json:"updated_at"`
+}

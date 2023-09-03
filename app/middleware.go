@@ -84,13 +84,26 @@ func (app *application) isProjectOwnerMW(handler http.HandlerFunc) http.HandlerF
 	}
 }
 
+// Works for routes containing {projectId} or {ticketId}
 func (app *application) isProjectMemberMW(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := r.Context().Value(ContextKey("userId")).(string)
 		projectId := mux.Vars(r)["projectId"]
+		ticketId := mux.Vars(r)["ticketId"]
+
+		if projectId == "" && ticketId != "" {
+			ticket, err := app.queries.FindTicketById(ticketId)
+
+			if err != nil {
+				app.badRequest(w, "ticket not found", nil)
+				return
+			}
+
+			projectId = ticket.Project_id
+		}
 
 		if projectId == "" || userId == "" {
-			app.badRequest(w, "projectId or userId missing", nil)
+			app.badRequest(w, "projectId or userId or ticketId missing", nil)
 			return
 		}
 

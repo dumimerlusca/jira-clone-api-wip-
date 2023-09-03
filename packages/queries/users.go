@@ -1,10 +1,7 @@
 package queries
 
 import (
-	"fmt"
 	"jira-clone/packages/models"
-
-	"github.com/lib/pq"
 )
 
 func (q *Queries) GetUsers() ([]models.User, error) {
@@ -100,10 +97,6 @@ func (q *Queries) FindUserById(id string, includePassword bool) (*models.User, e
 	row := db.QueryRow(sql, id)
 
 	err := row.Scan(args...)
-
-	_, test := err.(*pq.Error)
-
-	fmt.Println("HELLO1", err, test)
 
 	if err != nil {
 		return nil, err
