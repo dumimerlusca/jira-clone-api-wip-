@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 type application struct {
@@ -35,5 +36,9 @@ func Init() {
 
 	mux := app.routes()
 
-	http.ListenAndServe(":3001", mux)
+	c := cors.New(cors.Options{AllowedOrigins: []string{"*"}})
+
+	handler := c.Handler(mux)
+
+	http.ListenAndServe(":3001", handler)
 }

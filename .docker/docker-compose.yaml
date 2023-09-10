@@ -11,5 +11,14 @@ services:
       POSTGRES_DB: jira-clone-db
     volumes:
       - db-data:/var/lib/postgresql/data
+  api:
+    image: dumimerlusca/jira-clone-api
+    restart: always
+    container_name: jira-clone-api
+    ports:
+      - "8080:3001"
+    environment:
+      DATABASE_URL: postgresql://dumi:dumi@db:5432/jira-clone-db?sslmode=disable
+      JWT_SECRET: kjahsduasdy728qhsabdyasd52ui2knaoinsdk2udh2d6gausjdk
 volumes:
   db-data:
