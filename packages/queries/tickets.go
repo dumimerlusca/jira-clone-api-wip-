@@ -74,13 +74,13 @@ func (q *Queries) CreateTicket(d CreateTicketDTO) (*models.Ticket, error) {
 
 	sqlValues := `VALUES(` + strings.Join(v, ",") + ") "
 
-	sql = sql + sqlValues + `RETURNING id, type,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at`
+	sql = sql + sqlValues + `RETURNING id, number,type,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at`
 
 	row := q.Db.QueryRow(sql, values...)
 
 	var t models.Ticket
 
-	err := row.Scan(&t.Id, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
+	err := row.Scan(&t.Id, &t.Number, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
 
 	if err != nil {
 		return nil, err

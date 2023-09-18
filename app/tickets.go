@@ -68,48 +68,41 @@ func (app *application) updateTicketHandler(w http.ResponseWriter, r *http.Reque
 	response.NewSuccessResponse(w, http.StatusOK, ticket)
 }
 
-type user struct {
-	Id       *string `json:"id"`
-	Username *string `json:"username"`
-}
-
-type ticket struct {
-	Id           string  `json:"id"`
-	Priority     int     `json:"priority"`
-	Type         string  `json:"type"`
-	Title        string  `json:"title"`
-	Story_points int     `json:"story_points"`
-	Description  *string `json:"description"`
-	Status       string  `json:"status"`
-	Component_id *string `json:"component_id"`
-	Created_at   string  `json:"created_at"`
-	Updated_at   string  `json:"updated_at"`
-	Created_by   *user   `json:"created_by"`
-	Assignee     *user   `json:"assignee"`
-}
-
 func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request) {
 	projectId := mux.Vars(r)["projectId"]
 
-	rows, err := app.db.Query(`SELECT u.username,u.id, u1.username, u1.id, t.id, t.type,t.priority, t.title, t.story_points, t.description,t.status, t.component_id, t.created_at, t.updated_at FROM tickets AS t
-	LEFT JOIN users AS u ON u.id=t.assignee_id
-	INNER JOIN users AS u1 ON u1.id=t.created_by_id
-	WHERE project_id=$1`, projectId)
+	rows, err := app.db.Query(`SELECT 
+		id,
+		key,
+		type,
+		priority,
+		title,
+		story_points,
+		description,
+		status,
+		component_id,
+		created_at,
+		updated_at,
+		creator_id,
+		creator_username,
+		assignee_id,
+		assignee_username
+	FROM tickets_view WHERE project_id=$1`, projectId)
 
 	if err != nil {
 		app.serverError(w, err.Error(), err)
 		return
 	}
 
-	tickets := []ticket{}
+	tickets := []TicketItem{}
 
 	for rows.Next() {
-		var createdBy user
-		var assignee user
+		var createdBy UserItem
+		var assignee UserItem
 
-		t := ticket{Created_by: &createdBy, Assignee: &assignee}
+		t := TicketItem{Creator: &createdBy, Assignee: &assignee}
 
-		err := rows.Scan(&assignee.Username, &assignee.Id, &createdBy.Username, &createdBy.Id, &t.Id, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at)
+		err := rows.Scan(&t.Id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
 
 		if err != nil {
 			app.serverError(w, err.Error(), err)

@@ -31,6 +31,7 @@ func TestCreateTicket(t *testing.T) {
 
 		require.NoError(t, err)
 
+		assert.NotEmpty(t, k.Number)
 		assert.Equal(t, data.Title, k.Title)
 		assert.Equal(t, data.Type, k.Type)
 		assert.Equal(t, data.Project_id, k.Project_id)

@@ -1,5 +1,7 @@
 DROP TABLE IF EXISTS comments;
 
+DROP view IF EXISTS tickets_view;
+
 DROP TABLE IF EXISTS tickets;
 
 DROP TYPE IF EXISTS ticket_status;
@@ -22,4 +24,6 @@ DROP TABLE IF EXISTS photos;
 
 DROP TABLE IF EXISTS users;
 
-DROP type ticket_type;
+DROP type IF EXISTS ticket_type;
+
+DROP function IF EXISTS f_generate_ticket_number;

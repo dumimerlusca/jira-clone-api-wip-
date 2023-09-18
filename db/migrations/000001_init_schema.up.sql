@@ -85,6 +85,7 @@ CREATE TYPE ticket_type AS ENUM (
 
 CREATE TABLE tickets (
     id VARCHAR(255) PRIMARY KEY,
+    number INT NOT NULL,
     type ticket_type NOT NULL,
     priority ticket_priority NOT NULL DEFAULT '2',
     title VARCHAR(255) NOT NULL,
@@ -102,8 +103,56 @@ CREATE TABLE tickets (
     FOREIGN KEY (assignee_id) REFERENCES users(id),
     FOREIGN KEY (updated_by_id) REFERENCES users(id),
     FOREIGN KEY (project_id) REFERENCES projects(id),
-    FOREIGN KEY (component_id) REFERENCES components(id)
+    FOREIGN KEY (component_id) REFERENCES components(id),
+    CONSTRAINT duplicate_ticket_number_not_allowed UNIQUE (number, project_id)
 );
+
+CREATE
+OR REPLACE FUNCTION f_generate_ticket_number () RETURNS trigger AS '
+DECLARE BEGIN NEW.number = (
+    SELECT
+        COUNT(*)
+    from
+        tickets
+    WHERE
+        tickets.project_id = NEW.project_id
+) + 1;
+
+RETURN NEW;
+
+END;
+
+' LANGUAGE 'plpgsql';
+
+CREATE TRIGGER trig_generate_ticket_number BEFORE
+INSERT
+    ON tickets FOR EACH ROW EXECUTE PROCEDURE f_generate_ticket_number();
+
+CREATE view tickets_view AS
+SELECT
+    (p.key || '-' || t.number) as key,
+    t.id,
+    t.number,
+    t.type,
+    t.priority,
+    t.title,
+    t.story_points,
+    t.description,
+    t.status,
+    t.component_id,
+    t.created_at,
+    t.updated_at,
+    p.id as project_id,
+    p.name as project_name,
+    creator.id as creator_id,
+    creator.username as creator_username,
+    assignee.id as assignee_id,
+    assignee.username as assignee_username
+FROM
+    tickets as t
+    INNER JOIN projects as p ON p.id = t.project_id
+    INNER JOIN users as creator ON creator.id = t.created_by_id
+    LEFT JOIN users as assignee ON assignee.id = t.assignee_id;
 
 CREATE TABLE comments(
     id BIGSERIAL PRIMARY KEY,
