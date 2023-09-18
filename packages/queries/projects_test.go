@@ -4,6 +4,7 @@ import (
 	"jira-clone/packages/random"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,5 +41,31 @@ func TestIsProjectMember(t *testing.T) {
 		v, err := tQueries.IsProjectMember(user.Id, project.Id)
 		require.NoError(t, err)
 		require.Equal(t, false, v)
+	})
+}
+
+func TestSelectProjectsForUser(t *testing.T) {
+	t.Run("should return an array with all the projects a user is part of", func(t *testing.T) {
+		p, user := tQueries.CreateRandomProject(t)
+
+		projects, err := tQueries.SelectProjectsForUser(user.Id)
+
+		require.NoError(t, err)
+		require.Equal(t, 1, len(projects))
+
+		item := projects[0]
+
+		assert.Equal(t, p.Id, item.Id)
+		assert.Equal(t, p.Key, item.Key)
+		assert.Equal(t, p.Description, item.Description)
+		assert.Equal(t, p.Name, item.Name)
+		assert.Equal(t, p.Created_at, item.Created_at)
+		assert.Equal(t, p.Created_by_id, item.Created_by_id)
+	})
+
+	t.Run("should return empty slice if no results are found", func(t *testing.T) {
+		projects, err := tQueries.SelectProjectsForUser("non existent user")
+		require.NoError(t, err)
+		require.Equal(t, 0, len(projects))
 	})
 }

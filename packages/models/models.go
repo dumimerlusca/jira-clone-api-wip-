@@ -38,6 +38,7 @@ type UserProjectXref struct {
 
 type Ticket struct {
 	Id            string  `json:"id"`
+	Type          string  `json:"type"`
 	Priority      int     `json:"priority"`
 	Title         string  `json:"title"`
 	Story_points  int     `json:"story_points"`

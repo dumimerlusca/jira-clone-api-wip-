@@ -1,7 +1,6 @@
 package queries
 
 import (
-	"fmt"
 	"jira-clone/packages/random"
 	"testing"
 
@@ -19,6 +18,7 @@ func TestCreateTicket(t *testing.T) {
 
 		data := CreateTicketDTO{
 			Title:         "TICKET 1",
+			Type:          "bug",
 			Project_id:    project.Id,
 			Created_by_id: user.Id,
 			Story_points:  &story_points,
@@ -27,15 +27,12 @@ func TestCreateTicket(t *testing.T) {
 			Assignee_id:   &user.Id,
 		}
 
-		fmt.Println(data)
-
 		k, err := tQueries.CreateTicket(data)
-
-		fmt.Println(k)
 
 		require.NoError(t, err)
 
 		assert.Equal(t, data.Title, k.Title)
+		assert.Equal(t, data.Type, k.Type)
 		assert.Equal(t, data.Project_id, k.Project_id)
 		assert.Equal(t, data.Created_by_id, k.Created_by_id)
 		assert.Equal(t, data.Description, k.Description)
@@ -57,14 +54,16 @@ func TestUpdateTicket(t *testing.T) {
 		priority := 3
 		assigne_id := user1.Id
 		status := "tested"
+		ticketType := "epic"
 
-		payload := UpdateTicketDTO{Title: &title, Description: &description, Assignee_id: &assigne_id, Story_points: &story_points, Priority: &priority, Status: &status}
+		payload := UpdateTicketDTO{Title: &title, Type: &ticketType, Description: &description, Assignee_id: &assigne_id, Story_points: &story_points, Priority: &priority, Status: &status}
 
 		updatedTicket, err := tQueries.UpdateTicket(ticket.Id, payload)
 
 		require.NoError(t, err)
 
 		assert.Equal(t, title, updatedTicket.Title)
+		assert.Equal(t, ticketType, updatedTicket.Type)
 		assert.Equal(t, description, *updatedTicket.Description)
 		assert.Equal(t, story_points, updatedTicket.Story_points)
 		assert.Equal(t, assigne_id, *updatedTicket.Assignee_id)

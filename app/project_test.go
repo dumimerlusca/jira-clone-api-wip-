@@ -130,3 +130,25 @@ func TestGetProjectMembers(t *testing.T) {
 		require.Equal(t, 3, len(resData))
 	})
 }
+
+func TestGetProjectsHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodGet, "/api/projects", struct{}{})
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 200 with success response and a list with projects", func(t *testing.T) {
+		_, user := tu.app.queries.CreateRandomProject(t)
+		res, _ := tu.SendAuthorizedReq(t, "GET", "/api/projects", struct{}{}, user.Id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		var resBody response.SuccessResponse
+
+		util.ReadAndUnmarshal(res.Body, &resBody)
+
+		resData, ok := resBody.Data.([]interface{})
+		require.Equal(t, true, ok)
+		require.Equal(t, 1, len(resData))
+	})
+}

@@ -34,7 +34,8 @@ func TestCreateTicketHandler(t *testing.T) {
 			Description  string
 			Priority     int
 			Title        string
-		}{Assignee_id: user.Id, Story_points: 100, Description: random.RandomString(30), Title: random.RandomString(10), Priority: 0}
+			Type         string
+		}{Assignee_id: user.Id, Story_points: 100, Description: random.RandomString(30), Title: random.RandomString(10), Priority: 0, Type: "epic"}
 
 		res, _ := tu.SendAuthorizedReq(t, http.MethodPost, "/api/projects/"+project.Id+"/tickets/create", payload, user.Id)
 
@@ -50,6 +51,7 @@ func TestCreateTicketHandler(t *testing.T) {
 		assert.Equal(t, project.Id, data["project_id"])
 		assert.Equal(t, user.Id, data["created_by_id"])
 		assert.Equal(t, payload.Title, data["title"])
+		assert.Equal(t, payload.Type, data["type"])
 		assert.Equal(t, payload.Description, data["description"])
 		assert.Equal(t, payload.Assignee_id, data["assignee_id"])
 		assert.Equal(t, float64(payload.Priority), data["priority"])

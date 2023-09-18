@@ -76,6 +76,7 @@ type user struct {
 type ticket struct {
 	Id           string  `json:"id"`
 	Priority     int     `json:"priority"`
+	Type         string  `json:"type"`
 	Title        string  `json:"title"`
 	Story_points int     `json:"story_points"`
 	Description  *string `json:"description"`
@@ -90,7 +91,7 @@ type ticket struct {
 func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request) {
 	projectId := mux.Vars(r)["projectId"]
 
-	rows, err := app.db.Query(`SELECT u.username,u.id, u1.username, u1.id, t.id, t.priority, t.title, t.story_points, t.description,t.status, t.component_id, t.created_at, t.updated_at FROM tickets AS t
+	rows, err := app.db.Query(`SELECT u.username,u.id, u1.username, u1.id, t.id, t.type,t.priority, t.title, t.story_points, t.description,t.status, t.component_id, t.created_at, t.updated_at FROM tickets AS t
 	LEFT JOIN users AS u ON u.id=t.assignee_id
 	INNER JOIN users AS u1 ON u1.id=t.created_by_id
 	WHERE project_id=$1`, projectId)
@@ -108,7 +109,7 @@ func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request
 
 		t := ticket{Created_by: &createdBy, Assignee: &assignee}
 
-		err := rows.Scan(&assignee.Username, &assignee.Id, &createdBy.Username, &createdBy.Id, &t.Id, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at)
+		err := rows.Scan(&assignee.Username, &assignee.Id, &createdBy.Username, &createdBy.Id, &t.Id, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at)
 
 		if err != nil {
 			app.serverError(w, err.Error(), err)

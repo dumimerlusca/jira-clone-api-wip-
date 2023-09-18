@@ -60,7 +60,16 @@ func (app *application) createProjectHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (app *application) getProjectsHandler(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(ContextKey("userId")).(string)
 
+	projects, err := app.queries.SelectProjectsForUser(userId)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, projects)
 }
 
 func (app *application) getProjectDetails(w http.ResponseWriter, r *http.Request) {

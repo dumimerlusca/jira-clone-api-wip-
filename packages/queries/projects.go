@@ -121,6 +121,29 @@ func (q *Queries) GetProjectDetails(projectId string) (*models.Project, error) {
 	return &project, nil
 }
 
+func (q Queries) SelectProjectsForUser(userId string) ([]*models.Project, error) {
+	rows, err := q.Db.Query(`SELECT p.id, p.name, p.key, p.description, p.created_by_id, p.created_at FROM user_project_xref as xref
+	INNER JOIN projects as p on p.id = xref.project_id
+	WHERE xref.user_id = $1`, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	projects := []*models.Project{}
+
+	for rows.Next() {
+		var p models.Project
+		err := rows.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_by_id, &p.Created_at)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, &p)
+	}
+
+	return projects, nil
+}
+
 type JoinedProjectDTO struct {
 	models.Project
 	Created_by models.UserDTO `json:"created_by"`

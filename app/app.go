@@ -36,7 +36,7 @@ func Init() {
 
 	mux := app.routes()
 
-	c := cors.New(cors.Options{AllowedOrigins: []string{"*"}})
+	c := cors.New(cors.Options{AllowedOrigins: []string{"*"}, AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE"}, AllowedHeaders: []string{"Content-type", "Authorization"}})
 
 	handler := c.Handler(mux)
 

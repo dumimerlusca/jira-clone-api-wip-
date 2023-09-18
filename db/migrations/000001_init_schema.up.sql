@@ -73,8 +73,19 @@ CREATE TYPE ticket_status AS ENUM (
     'closed'
 );
 
+CREATE TYPE ticket_type AS ENUM (
+    'bug',
+    'devOps',
+    'epic',
+    'story',
+    'sub-task',
+    'technical-story',
+    'design'
+);
+
 CREATE TABLE tickets (
     id VARCHAR(255) PRIMARY KEY,
+    type ticket_type NOT NULL,
     priority ticket_priority NOT NULL DEFAULT '2',
     title VARCHAR(255) NOT NULL,
     story_points INT DEFAULT 0,

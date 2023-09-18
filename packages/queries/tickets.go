@@ -14,6 +14,7 @@ type CreateTicketDTO struct {
 	Project_id    string
 	Created_by_id string
 	Title         string
+	Type          string
 	Assignee_id   *string
 	Component_id  *string
 	Story_points  *int
@@ -26,14 +27,18 @@ func (d *CreateTicketDTO) Validate() error {
 		return fmt.Errorf("title required")
 	}
 
+	if d.Type == "" {
+		return fmt.Errorf("type required")
+	}
+
 	return nil
 }
 
 func (q *Queries) CreateTicket(d CreateTicketDTO) (*models.Ticket, error) {
 	id := uuid.NewString()
 
-	fields := "id,title, project_id, created_by_id, updated_by_id"
-	values := []any{id, d.Title, d.Project_id, d.Created_by_id, d.Created_by_id}
+	fields := "id,title, project_id, created_by_id, updated_by_id, type"
+	values := []any{id, d.Title, d.Project_id, d.Created_by_id, d.Created_by_id, d.Type}
 
 	handleField := func(name string, value any) {
 		values = append(values, value)
@@ -69,13 +74,13 @@ func (q *Queries) CreateTicket(d CreateTicketDTO) (*models.Ticket, error) {
 
 	sqlValues := `VALUES(` + strings.Join(v, ",") + ") "
 
-	sql = sql + sqlValues + `RETURNING id, priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at`
+	sql = sql + sqlValues + `RETURNING id, type,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at`
 
 	row := q.Db.QueryRow(sql, values...)
 
 	var t models.Ticket
 
-	err := row.Scan(&t.Id, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
+	err := row.Scan(&t.Id, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
 
 	if err != nil {
 		return nil, err
@@ -86,6 +91,7 @@ func (q *Queries) CreateTicket(d CreateTicketDTO) (*models.Ticket, error) {
 
 type UpdateTicketDTO struct {
 	Title         *string
+	Type          *string
 	Assignee_id   *string
 	Component_id  *string
 	Story_points  *int
@@ -134,10 +140,13 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 	if d.Updated_by_id != nil {
 		handleField("updated_by_id", *d.Updated_by_id)
 	}
+	if d.Type != nil {
+		handleField("type", *d.Type)
+	}
 
 	set := strings.Join(sqlColumnValues, ",")
 	where := ` WHERE id=$` + strconv.FormatInt(int64((len(values)+1)), 10)
-	sql := `UPDATE tickets SET ` + set + where + " RETURNING id, priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at"
+	sql := `UPDATE tickets SET ` + set + where + " RETURNING id, type,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at"
 
 	values = append(values, ticketId)
 
@@ -147,7 +156,7 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 
 	var t models.Ticket
 
-	err := row.Scan(&t.Id, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
+	err := row.Scan(&t.Id, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
 
 	if err != nil {
 		return nil, err

@@ -21,3 +21,5 @@ DROP TABLE IF EXISTS user_details;
 DROP TABLE IF EXISTS photos;
 
 DROP TABLE IF EXISTS users;
+
+DROP type ticket_type;

@@ -54,7 +54,7 @@ func (q *Queries) CreateRandomProjectInvite(t *testing.T, status string) (*Creat
 
 func (q *Queries) CreateRandomTicket(t *testing.T) *models.Ticket {
 	project, user := q.CreateRandomProject(t)
-	data := CreateTicketDTO{Project_id: project.Id, Created_by_id: user.Id, Title: random.RandomString(20)}
+	data := CreateTicketDTO{Project_id: project.Id, Type: "bug", Created_by_id: user.Id, Title: random.RandomString(20)}
 	ticket, err := q.CreateTicket(data)
 
 	require.NoError(t, err)
