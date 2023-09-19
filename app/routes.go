@@ -13,6 +13,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("/api/projects/{projectId}/tickets", app.authMW(app.isProjectMemberMW(app.getProjectTickets))).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/create", app.authMW(app.isProjectMemberMW(app.createTicketHandler))).Methods("POST")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")
+	mux.HandleFunc("/api/tickets/{ticketKey}", app.authMW(app.getTicketDetailsHandler)).Methods("GET")
 
 	// AUTH
 	mux.HandleFunc("/api/auth/register", app.registerHandler).Methods("POST")

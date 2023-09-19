@@ -94,13 +94,13 @@ func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	tickets := []TicketItem{}
+	tickets := []queries.TicketDetails{}
 
 	for rows.Next() {
-		var createdBy UserItem
-		var assignee UserItem
+		var createdBy queries.UserItem
+		var assignee queries.UserItem
 
-		t := TicketItem{Creator: &createdBy, Assignee: &assignee}
+		t := queries.TicketDetails{Creator: &createdBy, Assignee: &assignee}
 
 		err := rows.Scan(&t.Id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
 
@@ -117,4 +117,18 @@ func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request
 	}
 
 	response.NewSuccessResponse(w, http.StatusOK, tickets)
+}
+
+func (app *application) getTicketDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	userId := extractUserId(r)
+	ticketKey := mux.Vars(r)["ticketKey"]
+
+	details, err := app.queries.GetTicketDetailsByKeyForUser(ticketKey, userId)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, details)
 }

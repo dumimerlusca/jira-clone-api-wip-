@@ -1,6 +1,7 @@
 package queries
 
 import (
+	"fmt"
 	"jira-clone/packages/random"
 	"testing"
 
@@ -90,5 +91,64 @@ func TestFindTicketById(t *testing.T) {
 
 		require.Error(t, err)
 		require.Empty(t, ticket)
+	})
+}
+
+func TestFindTicketKey(t *testing.T) {
+	t.Run("should return err", func(t *testing.T) {
+		key, err := tQueries.FindTicketKeyById("non exitent ticket")
+
+		assert.Error(t, err)
+		assert.Empty(t, key)
+	})
+
+	t.Run("should return the key", func(t *testing.T) {
+		p, _ := tQueries.CreateRandomProject(t)
+		ticket := tQueries.CreateRandomTicketForProject(t, p.Id, p.Created_by_id)
+		key, err := tQueries.FindTicketKeyById(ticket.Id)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, key)
+
+		assert.Equal(t, fmt.Sprintf("%v-1", p.Key), *key)
+	})
+}
+func TestGetProjectIdsWhereUserIsMember(t *testing.T) {
+
+	t.Run("should return list with ids", func(t *testing.T) {
+		u, _ := tQueries.CreateRandomUser(t)
+		u2, _ := tQueries.CreateRandomUser(t)
+
+		tQueries.CreateRandomProjectForUser(t, u.Id)
+		tQueries.CreateRandomProjectForUser(t, u.Id)
+		tQueries.CreateRandomProjectForUser(t, u.Id)
+		tQueries.CreateRandomProjectForUser(t, u2.Id)
+
+		ids, err := tQueries.GetProjectIdsWhereUserIsMember(u.Id)
+
+		for _, val := range ids {
+			assert.NotEmpty(t, val)
+		}
+
+		require.NoError(t, err)
+
+		require.Equal(t, 3, len(ids))
+	})
+}
+
+func TestGetTicketDetailsByKeyForUser(t *testing.T) {
+	t.Run("should work", func(t *testing.T) {
+		ticket := tQueries.CreateRandomTicket(t)
+		key, err := tQueries.FindTicketKeyById(ticket.Id)
+
+		require.NoError(t, err)
+
+		details, err := tQueries.GetTicketDetailsByKeyForUser(*key, ticket.Created_by_id)
+		require.NoError(t, err)
+		require.NotNil(t, details)
+
+		assert.Equal(t, *key, details.Key)
+		assert.Equal(t, ticket.Id, details.Id)
+		assert.Equal(t, ticket.Title, details.Title)
 	})
 }

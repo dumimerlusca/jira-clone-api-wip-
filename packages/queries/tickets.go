@@ -180,3 +180,88 @@ func (q *Queries) FindTicketById(id string) (*models.Ticket, error) {
 	return &t, nil
 
 }
+
+func (q *Queries) FindTicketKeyById(id string) (*string, error) {
+	row := q.Db.QueryRow(`SELECT key FROM tickets_view WHERE id=$1`, id)
+
+	var key string
+	err := row.Scan(&key)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &key, nil
+}
+
+func (q *Queries) GetProjectIdsWhereUserIsMember(userId string) ([]string, error) {
+	rows, err := q.Db.Query(`SELECT project_id FROM user_project_xref WHERE user_id=$1`, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	projecIds := []string{}
+
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+
+		projecIds = append(projecIds, id)
+	}
+
+	return projecIds, nil
+}
+
+func (q *Queries) GetTicketDetailsByKeyForUser(ticketKey string, userId string) (*TicketDetails, error) {
+	projectIds, err := q.GetProjectIdsWhereUserIsMember(userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(projectIds) == 0 {
+		return nil, fmt.Errorf("user is not part of any project")
+	}
+
+	mappedIds := []string{}
+	for _, str := range projectIds {
+		mappedIds = append(mappedIds, "'"+str+"'")
+	}
+
+	sql := `SELECT 
+			id,
+			key,
+			type,
+			priority,
+			title,
+			story_points,
+			description,
+			status,
+			component_id,
+			created_at,
+			updated_at,
+			creator_id,
+			creator_username,
+			assignee_id,
+			assignee_username
+	 FROM tickets_view WHERE key=$1 AND project_id IN ` + fmt.Sprintf("(%v)", strings.Join(mappedIds, ","))
+
+	row := q.Db.QueryRow(sql, ticketKey)
+
+	var createdBy UserItem
+	var assignee UserItem
+
+	t := TicketDetails{Creator: &createdBy, Assignee: &assignee}
+
+	err = row.Scan(&t.Id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}

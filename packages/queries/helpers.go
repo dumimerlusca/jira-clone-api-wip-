@@ -19,6 +19,20 @@ func (q *Queries) CreateRandomUser(t *testing.T) (user *models.User, decodedPass
 	return user, password
 }
 
+func (q *Queries) CreateRandomProjectForUser(t *testing.T, userId string) *models.Project {
+	name := random.RandomString(20)
+	description := random.RandomString(20)
+	key := random.RandomString(4)
+
+	data := CreateProjectDTO{Name: name, Description: description, Key: key, Created_by_id: userId}
+	project, err := q.CreateProject(data)
+	q.CreateUserProjectXref(userId, project.Id)
+
+	require.NoError(t, err)
+
+	return project
+}
+
 func (q *Queries) CreateRandomProject(t *testing.T) (*models.Project, *models.User) {
 	name := random.RandomString(20)
 	description := random.RandomString(20)
@@ -50,6 +64,15 @@ func (q *Queries) CreateRandomProjectInvite(t *testing.T, status string) (*Creat
 	inv, err := q.CreateProjectInvitation(p)
 
 	return &CreateRandomProjectInviteReturnValue{Inv: inv, Project: project, Receiver: receiver, Sender: sender}, err
+}
+
+func (q *Queries) CreateRandomTicketForProject(t *testing.T, projectId string, userId string) *models.Ticket {
+	data := CreateTicketDTO{Project_id: projectId, Type: "bug", Created_by_id: userId, Title: random.RandomString(20)}
+	ticket, err := q.CreateTicket(data)
+
+	require.NoError(t, err)
+
+	return ticket
 }
 
 func (q *Queries) CreateRandomTicket(t *testing.T) *models.Ticket {

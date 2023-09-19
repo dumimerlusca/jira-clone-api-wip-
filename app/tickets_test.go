@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"jira-clone/packages/random"
 	"jira-clone/packages/response"
 	"jira-clone/packages/util"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateTicketHandler(t *testing.T) {
@@ -143,4 +145,33 @@ func TestGetProjectTickets(t *testing.T) {
 		assert.Equal(t, 1, len(data))
 	})
 
+}
+
+func TestGetTicketDetailsHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodGet, "/api/tickets/VISA-1", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 200 status and ticket details", func(t *testing.T) {
+		ticket := tu.app.queries.CreateRandomTicket(t)
+		key, err := tu.app.queries.FindTicketKeyById(ticket.Id)
+
+		require.NoError(t, err)
+
+		res, _ := tu.SendAuthorizedReq(t, "GET", fmt.Sprintf("/api/tickets/%v", *key), nil, ticket.Created_by_id)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		var resBody response.SuccessResponse
+
+		util.ReadAndUnmarshal(res.Body, &resBody)
+
+		data, ok := resBody.Data.(map[string]any)
+
+		assert.Equal(t, true, ok)
+		assert.Equal(t, ticket.Id, data["id"])
+		assert.Equal(t, *key, data["key"])
+	})
 }
