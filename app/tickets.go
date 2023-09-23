@@ -1,6 +1,8 @@
 package app
 
 import (
+	"encoding/json"
+	"jira-clone/packages/events"
 	"jira-clone/packages/queries"
 	"jira-clone/packages/response"
 	"jira-clone/packages/util"
@@ -56,16 +58,22 @@ func (app *application) updateTicketHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	body.Updated_by_id = &userId
+	ticket, _ := app.queries.FindTicketById(ticketId)
 
-	ticket, err := app.queries.UpdateTicket(ticketId, body)
+	body.Updated_by_id = userId
+
+	updatedTicket, err := app.queries.UpdateTicket(ticketId, body)
 
 	if err != nil {
 		app.serverError(w, err.Error(), err)
 		return
 	}
 
-	response.NewSuccessResponse(w, http.StatusOK, ticket)
+	go func() {
+		app.registerTicketUpdatedEvents(ticket, updatedTicket)
+	}()
+
+	response.NewSuccessResponse(w, http.StatusOK, updatedTicket)
 }
 
 func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request) {
@@ -131,4 +139,53 @@ func (app *application) getTicketDetailsHandler(w http.ResponseWriter, r *http.R
 	}
 
 	response.NewSuccessResponse(w, http.StatusOK, details)
+}
+
+type TicketHistoryItem struct {
+	events.TicketUpdatedEventData
+	Created_at string `json:"created_at"`
+}
+
+func (app *application) getTicketHistory(w http.ResponseWriter, r *http.Request) {
+	ticketKey := mux.Vars(r)["ticketKey"]
+
+	if ticketKey == "" {
+		app.badRequest(w, "invalid ticket id", nil)
+		return
+	}
+
+	rows, err := app.db.Query(`SELECT created_at, data FROM events WHERE source_id=$1 AND data ->> 'ticketId'=$2 ORDER BY created_at DESC`, events.SourceIdTicketUpdatedEvent, ticketKey)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	history := []*TicketHistoryItem{}
+
+	for rows.Next() {
+		var created_at string
+		var jData string
+
+		err := rows.Scan(&created_at, &jData)
+
+		if err != nil {
+			app.serverError(w, err.Error(), err)
+			return
+		}
+
+		var eventData TicketHistoryItem
+
+		err = json.Unmarshal([]byte(jData), &eventData)
+
+		if err != nil {
+			continue
+		}
+
+		eventData.Created_at = created_at
+
+		history = append(history, &eventData)
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, history)
 }

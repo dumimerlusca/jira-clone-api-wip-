@@ -163,4 +163,11 @@ CREATE TABLE comments(
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
     FOREIGN KEY (ticket_id) REFERENCES tickets(id),
     FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+CREATE TABLE events(
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    source_id VARCHAR(50) NOT NULL,
+    data JSON NOT NULL
 )

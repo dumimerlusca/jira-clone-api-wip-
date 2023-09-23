@@ -85,3 +85,14 @@ func (u *TestUtils) SendUnauthorizedReq(t *testing.T, method string, url string,
 	u.app.routes().ServeHTTP(res, req)
 	return res, req
 }
+
+func (U *TestUtils) GetSuccessResponseData(t *testing.T, res *httptest.ResponseRecorder) any {
+	var body response.SuccessResponse
+
+	util.ReadAndUnmarshal(res.Body, &body)
+
+	require.Equal(t, true, body.Success)
+	require.NotNil(t, body.Data)
+
+	return body.Data
+}

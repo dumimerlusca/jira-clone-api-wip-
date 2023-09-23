@@ -64,15 +64,15 @@ func TestCreateTicketHandler(t *testing.T) {
 
 func TestUpdateTicketHandler(t *testing.T) {
 	t.Run("should require auth", func(t *testing.T) {
-		res, _ := tu.SendUnauthorizedReq(t, http.MethodPatch, "/api/projects/projectId/tickets/update/ticketId", nil)
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodPatch, "/api/tickets/update/ticketId", nil)
 
 		tu.RequireStatus(t, res, http.StatusUnauthorized)
 	})
 
 	t.Run("require user to be project member", func(t *testing.T) {
-		project, _ := tu.app.queries.CreateRandomProject(t)
+		ticket := tu.app.queries.CreateRandomTicket(t)
 		user, _ := tu.app.queries.CreateRandomUser(t)
-		res, _ := tu.SendAuthorizedReq(t, http.MethodPatch, "/api/projects/"+project.Id+"/tickets/update/ticketId", nil, user.Id)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPatch, "/api/tickets/update/"+ticket.Id, nil, user.Id)
 
 		tu.RequireStatus(t, res, http.StatusUnauthorized)
 	})
@@ -91,7 +91,7 @@ func TestUpdateTicketHandler(t *testing.T) {
 			Status       string
 		}{Assignee_id: user.Id, Story_points: 100, Description: random.RandomString(30), Title: random.RandomString(10), Priority: 0, Status: "tested"}
 
-		res, _ := tu.SendAuthorizedReq(t, http.MethodPatch, "/api/projects/"+ticket.Project_id+"/tickets/update/"+ticket.Id, payload, ticket.Created_by_id)
+		res, _ := tu.SendAuthorizedReq(t, http.MethodPatch, "/api/tickets/update/"+ticket.Id, payload, ticket.Created_by_id)
 
 		tu.RequireStatus(t, res, http.StatusOK)
 

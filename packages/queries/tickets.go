@@ -98,13 +98,12 @@ type UpdateTicketDTO struct {
 	Description   *string
 	Priority      *int
 	Status        *string
-	Updated_by_id *string
+	Updated_by_id string
 }
 
 func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Ticket, error) {
-
-	values := []any{time.Now()}
-	sqlColumnValues := []string{"updated_at=$1"}
+	values := []any{time.Now(), d.Updated_by_id}
+	sqlColumnValues := []string{"updated_at=$1, updated_by_id=$2"}
 
 	handleField := func(name string, value any) {
 		values = append(values, value)
@@ -137,9 +136,6 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 	if d.Status != nil {
 		handleField("status", *d.Status)
 	}
-	if d.Updated_by_id != nil {
-		handleField("updated_by_id", *d.Updated_by_id)
-	}
 	if d.Type != nil {
 		handleField("type", *d.Type)
 	}
@@ -149,8 +145,6 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 	sql := `UPDATE tickets SET ` + set + where + " RETURNING id, type,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at"
 
 	values = append(values, ticketId)
-
-	fmt.Print(sql)
 
 	row := q.Db.QueryRow(sql, values...)
 
@@ -169,9 +163,9 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 func (q *Queries) FindTicketById(id string) (*models.Ticket, error) {
 	var t models.Ticket
 
-	row := q.Db.QueryRow(`SELECT id,priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at FROM tickets WHERE id=$1`, id)
+	row := q.Db.QueryRow(`SELECT id, priority, title, story_points, description, status, created_by_id, assignee_id, project_id, component_id, updated_by_id, created_at, updated_at, type FROM tickets WHERE id=$1`, id)
 
-	err := row.Scan(&t.Id, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at)
+	err := row.Scan(&t.Id, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Created_by_id, &t.Assignee_id, &t.Project_id, &t.Component_id, &t.Updated_by_id, &t.Created_at, &t.Updated_at, &t.Type)
 
 	if err != nil {
 		return nil, err

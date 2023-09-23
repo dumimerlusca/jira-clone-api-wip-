@@ -95,7 +95,7 @@ func (app *application) isProjectMemberMW(handler http.HandlerFunc) http.Handler
 			ticket, err := app.queries.FindTicketById(ticketId)
 
 			if err != nil {
-				app.badRequest(w, "ticket not found", nil)
+				app.badRequest(w, err.Error(), nil)
 				return
 			}
 

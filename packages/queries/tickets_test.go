@@ -58,7 +58,7 @@ func TestUpdateTicket(t *testing.T) {
 		status := "tested"
 		ticketType := "epic"
 
-		payload := UpdateTicketDTO{Title: &title, Type: &ticketType, Description: &description, Assignee_id: &assigne_id, Story_points: &story_points, Priority: &priority, Status: &status}
+		payload := UpdateTicketDTO{Title: &title, Type: &ticketType, Description: &description, Assignee_id: &assigne_id, Story_points: &story_points, Priority: &priority, Status: &status, Updated_by_id: ticket.Created_by_id}
 
 		updatedTicket, err := tQueries.UpdateTicket(ticket.Id, payload)
 

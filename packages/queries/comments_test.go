@@ -62,3 +62,18 @@ func TestFindCommentById(t *testing.T) {
 
 	})
 }
+
+func TestUpdateComment(t *testing.T) {
+	t.Run("should update comment and return it", func(t *testing.T) {
+		com := tQueries.CreateRandomComment(t)
+
+		payload := UpdateCommentPayload{Text: random.RandomString(20)}
+
+		updatedCom, err := tQueries.UpdateComment(com.Id, payload)
+
+		require.NoError(t, err)
+
+		require.Equal(t, payload.Text, updatedCom.Text)
+		require.NotEqual(t, com.Updated_at, updatedCom.Updated_at)
+	})
+}

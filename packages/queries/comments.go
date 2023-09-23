@@ -1,6 +1,10 @@
 package queries
 
-import "jira-clone/packages/models"
+import (
+	"fmt"
+	"jira-clone/packages/models"
+	"time"
+)
 
 type CreateCommentDTO struct {
 	Author_id string
@@ -81,4 +85,33 @@ func (q *Queries) SelectJoinedTicketComments(ticketId string) ([]JoinedComment, 
 	}
 
 	return comments, nil
+}
+
+type UpdateCommentPayload struct {
+	Text string
+}
+
+func (p *UpdateCommentPayload) Validate() error {
+	if p.Text == "" {
+		return fmt.Errorf("text cannot be empty")
+	}
+
+	return nil
+}
+
+func (q *Queries) UpdateComment(commentId string, payload UpdateCommentPayload) (*models.Comment, error) {
+	row := q.Db.QueryRow(`UPDATE comments SET text=$1, updated_at=$2 RETURNING id, ticket_id, author_id, text, created_at, updated_at`, payload.Text, time.Now())
+
+	var c models.Comment
+	d := time.Now()
+
+	fmt.Println(d)
+
+	err := row.Scan(&c.Id, &c.Ticket_id, &c.Author_id, &c.Text, &c.Created_at, &c.Updated_at)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }

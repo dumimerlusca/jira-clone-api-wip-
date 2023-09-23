@@ -12,8 +12,9 @@ func (app *application) routes() http.Handler {
 	// TICKETS
 	mux.HandleFunc("/api/projects/{projectId}/tickets", app.authMW(app.isProjectMemberMW(app.getProjectTickets))).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/create", app.authMW(app.isProjectMemberMW(app.createTicketHandler))).Methods("POST")
-	mux.HandleFunc("/api/projects/{projectId}/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")
+	mux.HandleFunc("/api/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")
 	mux.HandleFunc("/api/tickets/{ticketKey}", app.authMW(app.getTicketDetailsHandler)).Methods("GET")
+	mux.HandleFunc("/api/tickets/history/{ticketKey}", app.authMW(app.getTicketHistory)).Methods("GET")
 
 	// AUTH
 	mux.HandleFunc("/api/auth/register", app.registerHandler).Methods("POST")
@@ -41,6 +42,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("/api/tickets/{ticketId}/comments/create", app.authMW(app.isProjectMemberMW(app.createCommentHandler))).Methods("POST")
 	mux.HandleFunc("/api/tickets/{ticketId}/comments", app.authMW(app.isProjectMemberMW(app.getTicketCommentsHandler))).Methods("GET")
 	mux.HandleFunc("/api/comments/delete/{commentId}", app.authMW(app.deleteCommentHandler)).Methods("DELETE")
+	mux.HandleFunc("/api/comments/update/{commentId}", app.authMW(app.updateCommentHandler)).Methods("PATCH")
 
 	return mux
 }

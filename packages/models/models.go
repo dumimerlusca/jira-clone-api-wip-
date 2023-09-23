@@ -62,3 +62,10 @@ type Comment struct {
 	Created_at string `json:"created_at"`
 	Updated_at string `json:"updated_at"`
 }
+
+type Event struct {
+	Id         string `json:"id"`
+	Created_at string `json:"created_at"`
+	Source_id  string `json:"source_id"`
+	Data       string `json:"data"`
+}

@@ -116,3 +116,34 @@ func TestDeleteCommentHandler(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestUpdateCommentHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, "PATCH", "/api/comments/update/1", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 401 status if user is not comment author", func(t *testing.T) {
+		com := tu.app.queries.CreateRandomComment(t)
+		user, _ := tu.app.queries.CreateRandomUser(t)
+
+		res, _ := tu.SendAuthorizedReq(t, "PATCH", fmt.Sprintf("/api/comments/update/%v", com.Id), nil, user.Id)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+	t.Run("should return 200 status and update comment", func(t *testing.T) {
+		com := tu.app.queries.CreateRandomComment(t)
+
+		payload := queries.UpdateCommentPayload{Text: random.RandomString(30)}
+
+		res, _ := tu.SendAuthorizedReq(t, "PATCH", fmt.Sprintf("/api/comments/update/%v", com.Id), payload, com.Author_id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		data := tu.GetSuccessResponseData(t, res).(map[string]any)
+
+		assert.Equal(t, payload.Text, data["text"])
+	})
+
+}
