@@ -102,7 +102,7 @@ type UpdateTicketDTO struct {
 }
 
 func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Ticket, error) {
-	values := []any{time.Now(), d.Updated_by_id}
+	values := []any{time.Now().UTC(), d.Updated_by_id}
 	sqlColumnValues := []string{"updated_at=$1, updated_by_id=$2"}
 
 	handleField := func(name string, value any) {

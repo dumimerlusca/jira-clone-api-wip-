@@ -175,3 +175,51 @@ func TestGetTicketDetailsHandler(t *testing.T) {
 		assert.Equal(t, *key, data["key"])
 	})
 }
+
+func TestGetTicketsHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodGet, "/api/tickets", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 200 status and a list of tickets from the projects where user is member", func(t *testing.T) {
+		ticket := tu.app.queries.CreateRandomTicket(t)
+		project2 := tu.app.queries.CreateRandomProjectForUser(t, ticket.Created_by_id)
+
+		tu.app.queries.CreateRandomTicketForProject(t, project2.Id, ticket.Created_by_id)
+		tu.app.queries.CreateRandomTicketForProject(t, ticket.Project_id, ticket.Created_by_id)
+		tu.app.queries.CreateRandomTicketForProject(t, ticket.Project_id, ticket.Created_by_id)
+
+		// new ticket and project that should not be available to the user
+		tu.app.queries.CreateRandomTicket(t)
+
+		res, _ := tu.SendAuthorizedReq(t, "GET", "/api/tickets", struct{}{}, ticket.Created_by_id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		data := tu.GetSuccessResponseData(t, res).([]any)
+
+		assert.Equal(t, 4, len(data))
+	})
+
+	t.Run("should accept a projectId query parameter to filter the tickets", func(t *testing.T) {
+		ticket := tu.app.queries.CreateRandomTicket(t)
+		project2 := tu.app.queries.CreateRandomProjectForUser(t, ticket.Created_by_id)
+
+		tu.app.queries.CreateRandomTicketForProject(t, project2.Id, ticket.Created_by_id)
+		tu.app.queries.CreateRandomTicketForProject(t, ticket.Project_id, ticket.Created_by_id)
+		tu.app.queries.CreateRandomTicketForProject(t, ticket.Project_id, ticket.Created_by_id)
+
+		// new ticket and project that should not be available to the user
+		tu.app.queries.CreateRandomTicket(t)
+
+		res, _ := tu.SendAuthorizedReq(t, "GET", "/api/tickets?projectId="+project2.Id, struct{}{}, ticket.Created_by_id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		data := tu.GetSuccessResponseData(t, res).([]any)
+
+		assert.Equal(t, 1, len(data))
+	})
+}

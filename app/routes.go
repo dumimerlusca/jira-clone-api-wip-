@@ -10,6 +10,7 @@ func (app *application) routes() http.Handler {
 	mux := mux.NewRouter()
 
 	// TICKETS
+	mux.HandleFunc("/api/tickets", app.authMW(app.getTicketsHandler)).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets", app.authMW(app.isProjectMemberMW(app.getProjectTickets))).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/create", app.authMW(app.isProjectMemberMW(app.createTicketHandler))).Methods("POST")
 	mux.HandleFunc("/api/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")

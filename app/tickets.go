@@ -2,13 +2,16 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"jira-clone/packages/events"
 	"jira-clone/packages/queries"
 	"jira-clone/packages/response"
 	"jira-clone/packages/util"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/exp/slices"
 )
 
 func (app *application) createTicketHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +79,7 @@ func (app *application) updateTicketHandler(w http.ResponseWriter, r *http.Reque
 	response.NewSuccessResponse(w, http.StatusOK, updatedTicket)
 }
 
+// TODO delete, not used anymore
 func (app *application) getProjectTickets(w http.ResponseWriter, r *http.Request) {
 	projectId := mux.Vars(r)["projectId"]
 
@@ -188,4 +192,110 @@ func (app *application) getTicketHistory(w http.ResponseWriter, r *http.Request)
 	}
 
 	response.NewSuccessResponse(w, http.StatusOK, history)
+}
+
+func (app *application) getTicketsHandler(w http.ResponseWriter, r *http.Request) {
+	userId := extractUserId(r)
+	projectId := util.GetQueryParameter("projectId", r)
+
+	projectIds, err := app.queries.GetProjectIdsWhereUserIsMember(userId)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	if projectId != "" && !slices.Contains(projectIds, projectId) {
+		app.unauthorizedRequest(w, "you are not member of this project", nil)
+		return
+	}
+
+	if len(projectIds) == 0 {
+		response.NewSuccessResponse(w, http.StatusOK, []any{})
+		return
+	}
+
+	orderByField, orderDirection := extractAndValidateOrder(r)
+
+	mappedIds := []string{}
+	for _, str := range projectIds {
+		mappedIds = append(mappedIds, "'"+str+"'")
+	}
+
+	sqlSelect := `SELECT 
+		id,
+		key,
+		type,
+		priority,
+		title,
+		story_points,
+		description,
+		status,
+		component_id,
+		created_at,
+		updated_at,
+		creator_id,
+		creator_username,
+		assignee_id,
+		assignee_username
+	FROM tickets_view `
+
+	sqlWhere := ``
+	sqlOrder := fmt.Sprintf(` ORDER BY %v %v`, orderByField, orderDirection)
+
+	if projectId != "" {
+		sqlWhere = `WHERE project_id=` + fmt.Sprintf("'%v'", projectId)
+	} else {
+		sqlWhere = `WHERE project_id IN ` + fmt.Sprintf("(%v)", strings.Join(mappedIds, ","))
+	}
+
+	sql := sqlSelect + sqlWhere + sqlOrder
+
+	rows, err := app.db.Query(sql)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	tickets := []*queries.TicketDetails{}
+
+	for rows.Next() {
+		var createdBy queries.UserItem
+		var assignee queries.UserItem
+
+		t := queries.TicketDetails{Creator: &createdBy, Assignee: &assignee}
+
+		err := rows.Scan(&t.Id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
+
+		if err != nil {
+			app.serverError(w, err.Error(), err)
+			return
+		}
+
+		if t.Assignee.Id == nil {
+			t.Assignee = nil
+		}
+
+		tickets = append(tickets, &t)
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, tickets)
+
+}
+
+func extractAndValidateOrder(r *http.Request) (string, string) {
+	orderByField := "created_at"
+	orderDirection := "DESC"
+
+	order := util.GetQueryParameter("order", r)
+	if order != "" && len(strings.Split(order, ".")) == 2 {
+		values := strings.Split(order, ".")
+		if slices.Contains([]string{"key", "type", "priority", "created_at", "updated_at", "assignee_id", "assignee_username", "status", "description", "story_points", "title", "creator_id", "creator_username"}, values[0]) && slices.Contains([]string{"asc", "desc"}, strings.ToLower(values[1])) {
+			orderByField = values[0]
+			orderDirection = values[1]
+		}
+	}
+
+	return orderByField, orderDirection
 }

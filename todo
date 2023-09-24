@@ -1,2 +1,0 @@
-Add created_at, updated_at field to comments TABLE
-Add type field to tickets table ( bug, feature, etc )
