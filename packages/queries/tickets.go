@@ -116,7 +116,12 @@ func (q *Queries) UpdateTicket(ticketId string, d UpdateTicketDTO) (*models.Tick
 	}
 
 	if d.Assignee_id != nil {
-		handleField("assignee_id", *d.Assignee_id)
+		if *d.Assignee_id == "" {
+			handleField("assignee_id", nil)
+
+		} else {
+			handleField("assignee_id", *d.Assignee_id)
+		}
 	}
 
 	if d.Component_id != nil {
@@ -228,6 +233,7 @@ func (q *Queries) GetTicketDetailsByKeyForUser(ticketKey string, userId string) 
 
 	sql := `SELECT 
 			id,
+			project_id,
 			key,
 			type,
 			priority,
@@ -251,7 +257,7 @@ func (q *Queries) GetTicketDetailsByKeyForUser(ticketKey string, userId string) 
 
 	t := TicketDetails{Creator: &createdBy, Assignee: &assignee}
 
-	err = row.Scan(&t.Id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
+	err = row.Scan(&t.Id, &t.Project_id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
 
 	if err != nil {
 		return nil, err

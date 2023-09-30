@@ -198,9 +198,11 @@ func TestGetTicketsHandler(t *testing.T) {
 
 		tu.RequireStatus(t, res, http.StatusOK)
 
-		data := tu.GetSuccessResponseData(t, res).([]any)
+		resData := tu.GetSuccessResponseData(t, res).(map[string]any)
 
-		assert.Equal(t, 4, len(data))
+		payload := resData["payload"].([]any)
+
+		assert.Equal(t, 4, len(payload))
 	})
 
 	t.Run("should accept a projectId query parameter to filter the tickets", func(t *testing.T) {
@@ -218,8 +220,10 @@ func TestGetTicketsHandler(t *testing.T) {
 
 		tu.RequireStatus(t, res, http.StatusOK)
 
-		data := tu.GetSuccessResponseData(t, res).([]any)
+		resData := tu.GetSuccessResponseData(t, res).(map[string]any)
 
-		assert.Equal(t, 1, len(data))
+		payload := resData["payload"].([]any)
+
+		assert.Equal(t, 1, len(payload))
 	})
 }

@@ -2,6 +2,7 @@ package queries
 
 type TicketDetails struct {
 	Id           string  `json:"id"`
+	Project_id   string  `json:"project_id"`
 	Key          string  `json:"key"`
 	Type         string  `json:"type"`
 	Priority     int     `json:"priority"`

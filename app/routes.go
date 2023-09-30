@@ -31,6 +31,7 @@ func (app *application) routes() http.Handler {
 
 	// USERS
 	mux.HandleFunc("/api/users/details/{username}", app.authMW(app.getUserDetailsHandler)).Methods("GET")
+	mux.HandleFunc("/api/users/workspace-members", app.authMW(app.getWorkspaceMembers)).Methods("GET")
 
 	// Project invitations
 	mux.HandleFunc("/api/projects/sendInvite/{projectId}", app.authMW(app.isProjectOwnerMW(app.sendProjectInvitationHandler))).Methods("POST")

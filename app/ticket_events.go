@@ -45,6 +45,28 @@ func (app *application) registerTicketUpdatedEvents(old *models.Ticket, new *mod
 	if old.Priority != new.Priority {
 		app.queries.NewTicketUpdatedEvent(queries.NewTicketUpdatedEventPayload{FieldName: "Priority", UpdatedById: user.Id, UpdateByUsername: user.Username, TicketId: new.Id, FromValue: old.Priority, FromDisplayValue: getTicketPriorityLabel(old.Priority), ToValue: new.Priority, ToDisplayValue: getTicketPriorityLabel(new.Priority)})
 	}
+
+	if old.Assignee_id == nil && new.Assignee_id != nil {
+		app.queries.NewTicketUpdatedEvent(queries.NewTicketUpdatedEventPayload{FieldName: "Assignee", UpdatedById: user.Id, UpdateByUsername: user.Username, TicketId: new.Id, ToValue: *new.Assignee_id, ToDisplayValue: app.helperGetUserUsername(*new.Assignee_id)})
+	}
+
+	if old.Assignee_id != nil && new.Assignee_id == nil {
+		app.queries.NewTicketUpdatedEvent(queries.NewTicketUpdatedEventPayload{FieldName: "Assignee", UpdatedById: user.Id, UpdateByUsername: user.Username, TicketId: new.Id, FromValue: app.helperGetUserUsername(*old.Assignee_id), FromDisplayValue: app.helperGetUserUsername(*old.Assignee_id)})
+	}
+
+	if old.Assignee_id != nil && new.Assignee_id != nil && *old.Assignee_id != *new.Assignee_id {
+		app.queries.NewTicketUpdatedEvent(queries.NewTicketUpdatedEventPayload{FieldName: "Assignee", UpdatedById: user.Id, UpdateByUsername: user.Username, TicketId: new.Id, FromValue: *old.Assignee_id, FromDisplayValue: app.helperGetUserUsername(*old.Assignee_id), ToValue: *new.Assignee_id, ToDisplayValue: app.helperGetUserUsername(*new.Assignee_id)})
+	}
+}
+
+func (app *application) helperGetUserUsername(userId string) string {
+	user, err := app.queries.FindUserById(userId, false)
+
+	if err != nil {
+		return userId
+	}
+
+	return user.Username
 }
 
 func getTicketPriorityLabel(priority int) string {

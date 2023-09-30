@@ -8,6 +8,7 @@ import (
 	"jira-clone/packages/response"
 	"jira-clone/packages/util"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -217,11 +218,6 @@ func (app *application) getTicketsHandler(w http.ResponseWriter, r *http.Request
 
 	orderByField, orderDirection := extractAndValidateOrder(r)
 
-	mappedIds := []string{}
-	for _, str := range projectIds {
-		mappedIds = append(mappedIds, "'"+str+"'")
-	}
-
 	sqlSelect := `SELECT 
 		id,
 		key,
@@ -238,18 +234,21 @@ func (app *application) getTicketsHandler(w http.ResponseWriter, r *http.Request
 		creator_username,
 		assignee_id,
 		assignee_username
-	FROM tickets_view `
+	FROM tickets_view`
 
-	sqlWhere := ``
-	sqlOrder := fmt.Sprintf(` ORDER BY %v %v`, orderByField, orderDirection)
+	sqlWhere := buildWhereClause(projectId, projectIds, r)
+	sqlOrder := fmt.Sprintf(`ORDER BY %v %v`, orderByField, orderDirection)
 
-	if projectId != "" {
-		sqlWhere = `WHERE project_id=` + fmt.Sprintf("'%v'", projectId)
-	} else {
-		sqlWhere = `WHERE project_id IN ` + fmt.Sprintf("(%v)", strings.Join(mappedIds, ","))
+	limit, _ := strconv.Atoi(util.GetQueryParameter("limit", r))
+	page, _ := strconv.Atoi(util.GetQueryParameter("page", r))
+
+	if limit == 0 {
+		limit = 10
 	}
 
-	sql := sqlSelect + sqlWhere + sqlOrder
+	offset := limit * page
+
+	sql := strings.Join([]string{sqlSelect, sqlWhere, sqlOrder, fmt.Sprintf(`LIMIT %v OFFSET %v`, limit, offset)}, " ")
 
 	rows, err := app.db.Query(sql)
 
@@ -280,8 +279,65 @@ func (app *application) getTicketsHandler(w http.ResponseWriter, r *http.Request
 		tickets = append(tickets, &t)
 	}
 
-	response.NewSuccessResponse(w, http.StatusOK, tickets)
+	var total int
 
+	row := app.db.QueryRow(`SELECT COUNT(*) FROM tickets_view ` + sqlWhere)
+
+	err = row.Scan(&total)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, PaginatedResponse{Payload: tickets, Metadata: PaginationMetadata{Page: page, Limit: limit, TotalCount: total}})
+}
+
+func buildWhereClause(projectId string, projectIds []string, r *http.Request) string {
+	sqlWhere := ``
+
+	mappedIds := []string{}
+	for _, str := range projectIds {
+		mappedIds = append(mappedIds, "'"+str+"'")
+	}
+
+	if projectId != "" {
+		sqlWhere = `WHERE project_id=` + fmt.Sprintf("'%v'", projectId)
+	} else {
+		sqlWhere = `WHERE project_id IN ` + fmt.Sprintf("(%v)", strings.Join(mappedIds, ","))
+	}
+
+	title := util.GetQueryParameter("title", r)
+
+	if title != "" {
+		sqlWhere += ` AND title ILIKE ` + fmt.Sprintf(`'%%%v%%'`, title)
+	}
+
+	priority := util.GetQueryParameter("priority", r)
+
+	if priority != "" {
+		sqlWhere += ` AND priority=` + fmt.Sprintf(`'%v'`, priority)
+	}
+
+	ticketType := util.GetQueryParameter("type", r)
+
+	if ticketType != "" {
+		sqlWhere += ` AND type=` + fmt.Sprintf(`'%v'`, ticketType)
+	}
+
+	status := util.GetQueryParameter("status", r)
+
+	if status != "" {
+		sqlWhere += ` AND status=` + fmt.Sprintf(`'%v'`, status)
+	}
+
+	assignee := util.GetQueryParameter("assignee", r)
+
+	if assignee != "" {
+		sqlWhere += ` AND assignee_id=` + fmt.Sprintf(`'%v'`, assignee)
+	}
+
+	return sqlWhere
 }
 
 func extractAndValidateOrder(r *http.Request) (string, string) {
