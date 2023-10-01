@@ -69,3 +69,9 @@ type Event struct {
 	Source_id  string `json:"source_id"`
 	Data       string `json:"data"`
 }
+
+type ImportantTicket struct {
+	Ticket_id  string `json:"ticket_id"`
+	User_id    string `json:"user_id"`
+	Project_id string `json:"project_id"`
+}

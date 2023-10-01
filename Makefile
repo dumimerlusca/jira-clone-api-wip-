@@ -20,6 +20,12 @@ migrations/down :
 migrations/goto:
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./db/migrations -database="${DATABASE_URL}" goto ${version}
 
+## migrations/new name=$1: create a new database migration
+.PHONY: migrations/new
+migrations/new:
+	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest create -seq -ext=.sql -dir=./db/migrations ${name}
+
+
 ## migrations/force version=$1: force database migration
 .PHONY: migrations/force
 migrations/force:

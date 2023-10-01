@@ -10,12 +10,18 @@ func (app *application) routes() http.Handler {
 	mux := mux.NewRouter()
 
 	// TICKETS
+	mux.HandleFunc("/api/stats/tickets", app.authMW(app.getOverallStatsForTicketsHandler)).Methods("GET")
 	mux.HandleFunc("/api/tickets", app.authMW(app.getTicketsHandler)).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets", app.authMW(app.isProjectMemberMW(app.getProjectTickets))).Methods("GET")
 	mux.HandleFunc("/api/projects/{projectId}/tickets/create", app.authMW(app.isProjectMemberMW(app.createTicketHandler))).Methods("POST")
 	mux.HandleFunc("/api/tickets/update/{ticketId}", app.authMW(app.isProjectMemberMW(app.updateTicketHandler))).Methods("PATCH")
 	mux.HandleFunc("/api/tickets/{ticketKey}", app.authMW(app.getTicketDetailsHandler)).Methods("GET")
 	mux.HandleFunc("/api/tickets/history/{ticketKey}", app.authMW(app.getTicketHistory)).Methods("GET")
+
+	// IMPORTANT TICKETS
+	mux.HandleFunc("/api/important-tickets/create", app.authMW(app.addImportantTicketHandler)).Methods("POST")
+	mux.HandleFunc("/api/important-tickets", app.authMW(app.getMyImportantTicketsHandler)).Methods("GET")
+	mux.HandleFunc("/api/important-tickets/delete/{ticketId}", app.authMW(app.deleteImportantTicketHandler)).Methods("DELETE")
 
 	// AUTH
 	mux.HandleFunc("/api/auth/register", app.registerHandler).Methods("POST")

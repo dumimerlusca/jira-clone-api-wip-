@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"jira-clone/packages/consts"
 	"jira-clone/packages/events"
 	"jira-clone/packages/queries"
 	"jira-clone/packages/response"
@@ -212,7 +213,7 @@ func (app *application) getTicketsHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if len(projectIds) == 0 {
-		response.NewSuccessResponse(w, http.StatusOK, []any{})
+		response.NewSuccessResponse(w, http.StatusOK, PaginatedResponse{Payload: []any{}})
 		return
 	}
 
@@ -354,4 +355,59 @@ func extractAndValidateOrder(r *http.Request) (string, string) {
 	}
 
 	return orderByField, orderDirection
+}
+
+func (app *application) getOverallStatsForTicketsHandler(w http.ResponseWriter, r *http.Request) {
+	userId := extractUserId(r)
+	projectId := util.GetQueryParameter("projectId", r)
+
+	projectIds, err := app.queries.GetProjectIdsWhereUserIsMember(userId)
+
+	items := map[string]int{consts.TicketStatusOpen: 0, consts.TicketStatusUnderDevelopment: 0, consts.TicketStatusUnderReview: 0, consts.TicketStatusDeployedToDev: 0, consts.TicketStatusTested: 0, consts.TicketStatusClosed: 0}
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	if len(projectIds) == 0 {
+		response.NewSuccessResponse(w, http.StatusOK, items)
+		return
+	}
+
+	if projectId != "" && !slices.Contains(projectIds, projectId) {
+		app.unauthorizedRequest(w, "you are not member of this project", nil)
+		return
+	}
+
+	if projectId != "" {
+		projectIds = []string{projectId}
+	}
+
+	mappedIds := []string{}
+	for _, str := range projectIds {
+		mappedIds = append(mappedIds, "'"+str+"'")
+	}
+
+	rows, err := app.db.Query(`SELECT status, COUNT(*) as count from tickets WHERE project_id IN ` + fmt.Sprintf("(%v)", strings.Join(mappedIds, ",")) + ` GROUP BY status`)
+
+	if err != nil {
+		app.serverError(w, err.Error(), err)
+		return
+	}
+
+	for rows.Next() {
+		var status string
+		var count int
+		err := rows.Scan(&status, &count)
+
+		if err != nil {
+			app.serverError(w, err.Error(), err)
+			return
+		}
+
+		items[status] = count
+	}
+
+	response.NewSuccessResponse(w, http.StatusOK, items)
 }

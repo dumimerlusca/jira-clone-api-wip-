@@ -227,3 +227,28 @@ func TestGetTicketsHandler(t *testing.T) {
 		assert.Equal(t, 1, len(payload))
 	})
 }
+
+func TestGetOverallStatsForTicketsHandler(t *testing.T) {
+	t.Run("should require auth", func(t *testing.T) {
+		res, _ := tu.SendUnauthorizedReq(t, http.MethodGet, "/api/stats/tickets", nil)
+
+		tu.RequireStatus(t, res, http.StatusUnauthorized)
+	})
+
+	t.Run("should return 200 status and a map with grouped ticket statuses", func(t *testing.T) {
+		p, u := tu.app.queries.CreateRandomProject(t)
+
+		tu.app.queries.CreateRandomTicketForProject(t, p.Id, u.Id)
+		tu.app.queries.CreateRandomTicketForProject(t, p.Id, u.Id)
+		tu.app.queries.CreateRandomTicketForProject(t, p.Id, u.Id)
+		tu.app.queries.CreateRandomTicketForProject(t, p.Id, u.Id)
+
+		res, _ := tu.SendAuthorizedReq(t, http.MethodGet, "/api/stats/tickets", struct{}{}, u.Id)
+
+		tu.RequireStatus(t, res, http.StatusOK)
+
+		data := tu.GetSuccessResponseData(t, res).(map[string]any)
+
+		fmt.Println(data)
+	})
+}
