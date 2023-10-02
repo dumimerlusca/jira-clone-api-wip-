@@ -259,6 +259,12 @@ func (q *Queries) GetTicketDetailsByKeyForUser(ticketKey string, userId string) 
 
 	err = row.Scan(&t.Id, &t.Project_id, &t.Key, &t.Type, &t.Priority, &t.Title, &t.Story_points, &t.Description, &t.Status, &t.Component_id, &t.Created_at, &t.Updated_at, &t.Creator.Id, &t.Creator.Username, &t.Assignee.Id, &t.Assignee.Username)
 
+	imp, _ := q.FindImportantTicket(userId, t.Id)
+
+	if imp != nil {
+		t.Important = true
+	}
+
 	if err != nil {
 		return nil, err
 	}

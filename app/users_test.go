@@ -83,7 +83,7 @@ func TestGetWorkspaceMembers(t *testing.T) {
 		assert.Equal(t, 2, len(data))
 	})
 
-	t.Run("should return 401 status if user is ot project member", func(t *testing.T) {
+	t.Run("should return 401 status if user is not project member", func(t *testing.T) {
 		p, _ := tu.app.queries.CreateRandomProject(t)
 
 		u1, _ := tu.app.queries.CreateRandomUser(t)

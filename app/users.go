@@ -41,13 +41,13 @@ func (app *application) getWorkspaceMembers(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if len(projectIds) == 0 {
-		response.NewSuccessResponse(w, http.StatusOK, []string{})
+	if projectId != "" && !slices.Contains(projectIds, projectId) {
+		app.unauthorizedRequest(w, "you are not member of this project", nil)
 		return
 	}
 
-	if projectId != "" && !slices.Contains(projectIds, projectId) {
-		app.unauthorizedRequest(w, "you are not member of this project", nil)
+	if len(projectIds) == 0 {
+		response.NewSuccessResponse(w, http.StatusOK, []string{})
 		return
 	}
 

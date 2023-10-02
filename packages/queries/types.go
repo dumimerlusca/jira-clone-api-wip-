@@ -13,6 +13,7 @@ type TicketDetails struct {
 	Component_id *string `json:"component_id"`
 	Created_at   string  `json:"created_at"`
 	Updated_at   string  `json:"updated_at"`
+	Important    bool    `json:"important"`
 
 	Creator  *UserItem `json:"creator"`
 	Assignee *UserItem `json:"assignee"`
