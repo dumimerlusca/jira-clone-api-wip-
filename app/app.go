@@ -40,5 +40,5 @@ func Init() {
 
 	handler := c.Handler(mux)
 
-	http.ListenAndServe(":3001", handler)
+	log.Fatal(http.ListenAndServe(":3001", handler))
 }

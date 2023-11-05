@@ -1,9 +1,10 @@
+run:
+	go run ./...
+
 docker/build:
 	docker build -t dumimerlusca/jira-clone-api .
 docker/push:
 	docker push dumimerlusca/jira-clone-api
-
-
 startdb:
 	docker compose -f ./.docker/docker-compose.yaml up -d
 stopdb:

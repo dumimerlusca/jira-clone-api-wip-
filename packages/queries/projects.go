@@ -121,20 +121,21 @@ func (q *Queries) GetProjectDetails(projectId string) (*models.Project, error) {
 	return &project, nil
 }
 
-func (q Queries) SelectProjectsForUser(userId string) ([]*models.Project, error) {
-	rows, err := q.Db.Query(`SELECT p.id, p.name, p.key, p.description, p.created_by_id, p.created_at FROM user_project_xref as xref
+func (q Queries) SelectProjectsForUser(userId string) ([]*ProjectDetails, error) {
+	rows, err := q.Db.Query(`SELECT p.id, p.name, p.key, p.description, p.created_at, users.id, users.username FROM user_project_xref as xref
 	INNER JOIN projects as p on p.id = xref.project_id
+	LEFT JOIN users on users.id=p.created_by_id
 	WHERE xref.user_id = $1`, userId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	projects := []*models.Project{}
+	projects := []*ProjectDetails{}
 
 	for rows.Next() {
-		var p models.Project
-		err := rows.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_by_id, &p.Created_at)
+		var p ProjectDetails
+		err := rows.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_at, &p.Creator.Id, &p.Creator.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -149,17 +150,17 @@ type JoinedProjectDTO struct {
 	Created_by models.UserDTO `json:"created_by"`
 }
 
-func (q *Queries) GetJoinedProjectDetails(projectId string) (*JoinedProjectDTO, error) {
-	sql := `SELECT p.id, p.name, p.key, p.description, p.created_by_id, p.created_at, u.id, u.username, u.created_at from projects AS p
+func (q *Queries) GetJoinedProjectDetails(projectId string) (*ProjectDetails, error) {
+	sql := `SELECT p.id, p.name, p.key, p.description, p.created_at, u.id, u.username from projects AS p
 	INNER JOIN users AS u ON p.created_by_id=u.id
 	WHERE p.id=$1
 	`
 	row := q.Db.QueryRow(sql, projectId)
 
-	var p JoinedProjectDTO
-	u := &p.Created_by
+	var p ProjectDetails
+	u := &p.Creator
 
-	err := row.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_by_id, &p.Created_at, &u.Id, &u.Username, &u.Created_at)
+	err := row.Scan(&p.Id, &p.Name, &p.Key, &p.Description, &p.Created_at, &u.Id, &u.Username)
 
 	if err != nil {
 		return nil, err

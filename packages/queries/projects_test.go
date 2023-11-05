@@ -60,7 +60,8 @@ func TestSelectProjectsForUser(t *testing.T) {
 		assert.Equal(t, p.Description, item.Description)
 		assert.Equal(t, p.Name, item.Name)
 		assert.Equal(t, p.Created_at, item.Created_at)
-		assert.Equal(t, p.Created_by_id, item.Created_by_id)
+		assert.Equal(t, p.Created_by_id, *item.Creator.Id)
+		assert.Equal(t, user.Username, *item.Creator.Username)
 	})
 
 	t.Run("should return empty slice if no results are found", func(t *testing.T) {

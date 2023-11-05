@@ -19,6 +19,15 @@ type TicketDetails struct {
 	Assignee *UserItem `json:"assignee"`
 }
 
+type ProjectDetails struct {
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	Key         string   `json:"key"`
+	Description string   `json:"description"`
+	Creator     UserItem `json:"creator"`
+	Created_at  string   `json:"created_at"`
+}
+
 type UserItem struct {
 	Id       *string `json:"id"`
 	Username *string `json:"username"`
